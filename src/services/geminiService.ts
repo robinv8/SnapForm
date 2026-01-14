@@ -38,7 +38,15 @@ const generateLocalData = (fields: FormFieldDefinition[]): FormData => {
 };
 
 export const generateSmartFormData = async (fields: FormFieldDefinition[]): Promise<FormData> => {
-  const apiKey = process.env.API_KEY;
+  // Get API key from chrome storage
+  let apiKey: string | undefined;
+  
+  try {
+    const result = await chrome.storage.sync.get(['geminiApiKey']);
+    apiKey = result.geminiApiKey;
+  } catch (error) {
+    console.warn("Failed to retrieve API key from storage:", error);
+  }
 
   if (!apiKey) {
     console.warn("No API Key found, falling back to local heuristic generation.");
