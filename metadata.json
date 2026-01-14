@@ -1,0 +1,5 @@
+{
+  "name": "FormFiller Pro - Design Prototype",
+  "description": "A functional prototype of a smart form-filling browser extension. Features AI-powered field recognition and automated test data generation.",
+  "requestFramePermissions": []
+}
