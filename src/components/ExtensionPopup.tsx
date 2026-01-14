@@ -20,6 +20,7 @@ interface ExtensionPopupProps {
   formFieldsCount: number;
   hasApiKey: boolean;
   onOpenOptions: () => void;
+  onRefresh: () => void;
 }
 
 const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
@@ -32,6 +33,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
   formFieldsCount,
   hasApiKey,
   onOpenOptions,
+  onRefresh,
 }) => {
   return (
     <div className="w-full h-full bg-white flex flex-col overflow-hidden">
@@ -43,13 +45,22 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
           </div>
           <span className="font-semibold tracking-wide">FormFiller Pro</span>
         </div>
-        <button
-          onClick={onOpenOptions}
-          className="text-white/80 hover:text-white transition-colors"
-          title="Settings"
-        >
-          <Settings size={18} />
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={onRefresh}
+            className="text-white/80 hover:text-white transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw size={18} />
+          </button>
+          <button
+            onClick={onOpenOptions}
+            className="text-white/80 hover:text-white transition-colors"
+            title="Settings"
+          >
+            <Settings size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}

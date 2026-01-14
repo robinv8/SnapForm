@@ -1,5 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { generateSmartFormData } from "../services/geminiService";
+import {
+  generateSmartFormData,
+  analyzeFormWithAI,
+} from "../services/geminiService";
 import ExtensionPopup from "../components/ExtensionPopup";
 import { FormFieldDefinition, FormData, FillMode, LogEntry } from "../types";
 
@@ -48,7 +51,7 @@ const Popup: React.FC = () => {
         return;
       }
 
-      // Check if we can access this tab (chrome:// pages are not accessible)
+      // Check if we can access this tab
       if (
         tab.url?.startsWith("chrome://") ||
         tab.url?.startsWith("chrome-extension://")
@@ -57,41 +60,52 @@ const Popup: React.FC = () => {
         return;
       }
 
+      // Inject content script if needed
       try {
-        // Try to send message to content script
-        const response = await chrome.tabs.sendMessage(tab.id, {
-          type: "DETECT_FORMS",
-        });
-        setFormFields(response.fields || []);
-
-        if (response.fields?.length > 0) {
-          addLog(`Detected ${response.fields.length} form fields`, "success");
-        } else {
-          addLog("No form fields detected on this page", "info");
-        }
-      } catch (sendError) {
-        // Content script not loaded, inject it first
-        console.log("Content script not loaded, injecting...");
-
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
           files: ["content.js"],
         });
+      } catch (e) {
+        // Script might already be injected
+      }
 
-        // Wait a bit for the script to initialize
-        await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-        // Try again
-        const response = await chrome.tabs.sendMessage(tab.id, {
-          type: "DETECT_FORMS",
+      // Check if we have API key for AI analysis
+      const { geminiApiKey } = await chrome.storage.sync.get(["geminiApiKey"]);
+
+      if (geminiApiKey) {
+        // Use AI analysis
+        addLog("Using AI to analyze form...", "info");
+
+        const htmlResponse = await chrome.tabs.sendMessage(tab.id, {
+          type: "GET_FORM_HTML",
         });
-        setFormFields(response.fields || []);
 
-        if (response.fields?.length > 0) {
-          addLog(`Detected ${response.fields.length} form fields`, "success");
-        } else {
-          addLog("No form fields detected on this page", "info");
+        if (htmlResponse?.html) {
+          const aiFields = await analyzeFormWithAI(htmlResponse.html);
+
+          if (aiFields.length > 0) {
+            setFormFields(aiFields);
+            addLog(`AI detected ${aiFields.length} form fields`, "success");
+            return;
+          }
         }
+
+        addLog("AI analysis failed, using local detection", "info");
+      }
+
+      // Fallback to local detection
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        type: "DETECT_FORMS",
+      });
+      setFormFields(response.fields || []);
+
+      if (response.fields?.length > 0) {
+        addLog(`Detected ${response.fields.length} form fields`, "success");
+      } else {
+        addLog("No form fields detected on this page", "info");
       }
     } catch (error) {
       console.error("Error detecting forms:", error);
@@ -116,6 +130,7 @@ const Popup: React.FC = () => {
 
     try {
       const data = await generateSmartFormData(formFields);
+      console.log("Generated data:", data);
 
       // Send data to content script to fill the form
       const [tab] = await chrome.tabs.query({
@@ -152,7 +167,7 @@ const Popup: React.FC = () => {
       // Send empty data to clear the form
       const emptyData: FormData = {};
       formFields.forEach((field) => {
-        emptyData[field.name] = field.type === "checkbox" ? false : "";
+        emptyData[field.id] = field.type === "checkbox" ? false : "";
       });
 
       await chrome.tabs.sendMessage(tab.id, {
@@ -171,6 +186,12 @@ const Popup: React.FC = () => {
     chrome.runtime.openOptionsPage();
   };
 
+  const handleRefresh = () => {
+    setFormFields([]);
+    setLogs([]);
+    detectForms();
+  };
+
   return (
     <div className="w-[400px] h-[600px]">
       <ExtensionPopup
@@ -183,6 +204,7 @@ const Popup: React.FC = () => {
         formFieldsCount={formFields.length}
         hasApiKey={hasApiKey}
         onOpenOptions={handleOpenOptions}
+        onRefresh={handleRefresh}
       />
     </div>
   );
