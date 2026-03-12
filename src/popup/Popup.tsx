@@ -9,6 +9,7 @@ import {
 import { saveFillHistory, getHistory, deleteHistoryEntry, clearHistory, searchHistory } from "../services/historyService";
 import ExtensionPopup from "../components/ExtensionPopup";
 import { FormFieldDefinition, FormData, FillMode, FillHistoryEntry, LogEntry, AI_PROVIDER_DEFAULTS } from "../types";
+import { t } from "../i18n";
 
 const Popup: React.FC = () => {
   const [formFields, setFormFields] = useState<FormFieldDefinition[]>([]);
@@ -19,7 +20,6 @@ const Popup: React.FC = () => {
   const [aiReady, setAiReady] = useState(false);
   const [providerInfo, setProviderInfo] = useState("");
 
-  // Check AI config on mount
   useEffect(() => {
     getAIConfig().then(config => {
       const valid = hasValidConfig(config);
@@ -30,12 +30,10 @@ const Popup: React.FC = () => {
     });
   }, []);
 
-  // Load history
   useEffect(() => {
     getHistory().then(setHistory);
   }, []);
 
-  // Detect forms on the active tab
   useEffect(() => {
     detectForms();
   }, []);
@@ -62,7 +60,7 @@ const Popup: React.FC = () => {
         currentWindow: true,
       });
       if (!tab.id) {
-        addLog("未找到活动标签页", "error");
+        addLog(t('noActiveTab'), "error");
         return;
       }
 
@@ -70,11 +68,10 @@ const Popup: React.FC = () => {
         tab.url?.startsWith("chrome://") ||
         tab.url?.startsWith("chrome-extension://")
       ) {
-        addLog("无法访问 Chrome 内部页面", "error");
+        addLog(t('cannotAccessChrome'), "error");
         return;
       }
 
-      // Inject content script if needed
       try {
         await chrome.scripting.executeScript({
           target: { tabId: tab.id },
@@ -86,7 +83,6 @@ const Popup: React.FC = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Step 1: Always try local detection first
       const response = await chrome.tabs.sendMessage(tab.id, {
         type: "DETECT_FORMS",
       });
@@ -94,14 +90,13 @@ const Popup: React.FC = () => {
 
       if (localFields.length > 0) {
         setFormFields(localFields);
-        addLog(`检测到 ${localFields.length} 个表单字段`, "success");
+        addLog(t('localDetected', { count: localFields.length }), "success");
         return;
       }
 
-      // Step 2: Local detection failed — try AI if configured
       const aiConfig = await getAIConfig();
       if (hasValidConfig(aiConfig)) {
-        addLog("本地未检测到表单，尝试 AI 分析...", "info");
+        addLog(t('aiAnalyzing'), "info");
 
         const htmlResponse = await chrome.tabs.sendMessage(tab.id, {
           type: "GET_FORM_HTML",
@@ -111,24 +106,24 @@ const Popup: React.FC = () => {
           const aiFields = await analyzeFormWithAI(htmlResponse.html);
           if (aiFields.length > 0) {
             setFormFields(aiFields);
-            addLog(`AI 检测到 ${aiFields.length} 个表单字段`, "success");
+            addLog(t('aiDetected', { count: aiFields.length }), "success");
             return;
           }
         }
 
-        addLog("AI 分析也未检测到表单", "info");
+        addLog(t('aiNoResult'), "info");
       } else {
-        addLog("当前页面未检测到表单字段", "info");
+        addLog(t('noFieldsDetected'), "info");
       }
     } catch (error) {
       console.error("Error detecting forms:", error);
-      addLog("检测表单失败，请确认当前页面包含表单", "error");
+      addLog(t('detectError'), "error");
     }
   };
 
   const handleAutoFill = useCallback(async () => {
     if (formFields.length === 0) {
-      addLog("没有可填充的表单字段", "error");
+      addLog(t('noFieldsToFill'), "error");
       return;
     }
 
@@ -136,18 +131,16 @@ const Popup: React.FC = () => {
     setFillResult(null);
 
     try {
-      // Determine fill mode: AI if configured, otherwise local
       const aiConfig = await getAIConfig();
       const useAI = hasValidConfig(aiConfig);
       const mode = useAI ? FillMode.AI : FillMode.STANDARD;
 
-      addLog(useAI ? `使用 AI 生成数据...` : "使用本地规则生成数据...", "info");
+      addLog(useAI ? t('usingAI') : t('usingLocal'), "info");
 
       const data = useAI
         ? await generateSmartFormData(formFields)
         : generateLocalData(formFields);
 
-      // Send data to content script to fill the form
       const [tab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
@@ -161,7 +154,6 @@ const Popup: React.FC = () => {
 
       const count = Object.keys(data).length;
 
-      // Save to history
       try {
         await saveFillHistory(
           tab.url || '',
@@ -176,12 +168,12 @@ const Popup: React.FC = () => {
         console.error('Failed to save history:', e);
       }
 
-      addLog(`成功填充 ${count} 个字段`, "success");
+      addLog(t('fillSuccessLog', { count }), "success");
       setFillResult({ type: "success", count });
       setTimeout(() => setFillResult(null), 3000);
     } catch (error) {
       console.error(error);
-      addLog("数据生成或填充失败", "error");
+      addLog(t('fillErrorLog'), "error");
       setFillResult({ type: "error" });
       setTimeout(() => setFillResult(null), 3000);
     } finally {
@@ -207,10 +199,10 @@ const Popup: React.FC = () => {
         data: emptyData,
       });
 
-      addLog("表单已清空", "info");
+      addLog(t('formCleared'), "info");
     } catch (error) {
       console.error(error);
-      addLog("清空表单失败", "error");
+      addLog(t('clearFormError'), "error");
     }
   };
 

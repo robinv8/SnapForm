@@ -19,6 +19,7 @@ import {
   Eraser,
 } from "lucide-react";
 import { FillMode, LogEntry, FillHistoryEntry } from "../types";
+import { t, getLocale } from "../i18n";
 
 type Tab = "fill" | "history";
 
@@ -76,6 +77,8 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
     return sensitive.some(s => text.includes(s));
   };
 
+  const locale = getLocale();
+
   const formatTime = (ts: number) => {
     const d = new Date(ts);
     const now = new Date();
@@ -84,11 +87,11 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
     const diffHour = Math.floor(diffMs / 3600000);
     const diffDay = Math.floor(diffMs / 86400000);
 
-    if (diffMin < 1) return '刚刚';
-    if (diffMin < 60) return `${diffMin} 分钟前`;
-    if (diffHour < 24) return `${diffHour} 小时前`;
-    if (diffDay < 7) return `${diffDay} 天前`;
-    return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+    if (diffMin < 1) return t('justNow');
+    if (diffMin < 60) return t('minutesAgo', { count: diffMin });
+    if (diffHour < 24) return t('hoursAgo', { count: diffHour });
+    if (diffDay < 7) return t('daysAgo', { count: diffDay });
+    return d.toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US', { month: 'short', day: 'numeric' });
   };
 
   const handleSearch = (q: string) => {
@@ -111,27 +114,27 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
       return {
         className: "bg-neutral-400 cursor-not-allowed",
         icon: <RefreshCw size={18} className="animate-spin" />,
-        text: "正在生成...",
+        text: t('generating'),
       };
     }
     if (fillResult?.type === "success") {
       return {
         className: "bg-success",
         icon: <CheckCircle2 size={18} />,
-        text: `已填充 ${fillResult.count} 个字段`,
+        text: t('fillSuccess', { count: fillResult.count }),
       };
     }
     if (fillResult?.type === "error") {
       return {
         className: "bg-error",
         icon: <AlertCircle size={18} />,
-        text: "填充失败",
+        text: t('fillError'),
       };
     }
     return {
       className: "bg-primary hover:bg-primary-hover active:scale-95",
       icon: <Play size={18} />,
-      text: "自动填充",
+      text: t('autoFill'),
     };
   };
 
@@ -141,19 +144,19 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
     <div className="w-full h-full bg-white flex flex-col overflow-hidden">
       {/* Header */}
       <div className="bg-primary px-5 py-3.5 flex justify-between items-center text-white">
-        <span className="font-semibold tracking-wide text-[15px]">SnapForm</span>
+        <span className="font-semibold tracking-wide text-[15px]">{t('appName')}</span>
         <div className="flex items-center space-x-2">
           <button
             onClick={onRefresh}
             className="text-white/80 hover:text-white transition-colors"
-            title="刷新检测"
+            title={t('refreshDetection')}
           >
             <RefreshCw size={16} />
           </button>
           <button
             onClick={onOpenOptions}
             className="text-white/80 hover:text-white transition-colors"
-            title="设置"
+            title={t('settings')}
           >
             <Settings size={16} />
           </button>
@@ -171,7 +174,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
           }`}
         >
           <Play size={13} />
-          <span>填充</span>
+          <span>{t('tabFill')}</span>
         </button>
         <button
           onClick={() => setActiveTab("history")}
@@ -182,7 +185,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
           }`}
         >
           <Clock size={13} />
-          <span>历史</span>
+          <span>{t('tabHistory')}</span>
           {history.length > 0 && (
             <span className="bg-neutral-200 text-neutral-600 text-[10px] px-1.5 py-0.5 rounded-full">
               {history.length}
@@ -198,12 +201,12 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
           {formFieldsCount > 0 ? (
             <div className="mb-3 p-3 rounded-lg bg-neutral-100 text-sm flex items-center text-neutral-700">
               <CheckCircle2 size={16} className="mr-2 shrink-0 text-success" />
-              <span>检测到 <strong>{formFieldsCount}</strong> 个表单字段</span>
+              <span>{t('fieldsDetected', { count: formFieldsCount })}</span>
             </div>
           ) : (
             <div className="mb-3 p-3 rounded-lg bg-neutral-100 text-sm flex items-center text-neutral-500">
               <Info size={16} className="mr-2 shrink-0" />
-              <span>当前页面未检测到表单</span>
+              <span>{t('noFormDetected')}</span>
             </div>
           )}
 
@@ -232,19 +235,19 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
               className="w-full py-2.5 px-4 rounded-lg font-medium text-neutral-600 bg-white border border-neutral-200 hover:bg-neutral-50 transition-colors text-sm flex items-center justify-center space-x-2"
             >
               <Eraser size={14} />
-              <span>清空表单</span>
+              <span>{t('clearForm')}</span>
             </button>
           </div>
 
           {/* Activity Log */}
           <div className="flex-1 overflow-hidden flex flex-col min-h-0">
             <label className="text-xs font-semibold text-neutral-500 tracking-wider mb-2 block">
-              操作日志
+              {t('activityLog')}
             </label>
             <div className="bg-white border border-neutral-200 rounded-lg flex-1 overflow-y-auto p-3 space-y-2 text-sm">
               {logs.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-neutral-400 py-4">
-                  <span className="text-xs">暂无操作记录</span>
+                  <span className="text-xs">{t('noLogs')}</span>
                 </div>
               ) : (
                 logs.map((log) => (
@@ -291,7 +294,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  placeholder="搜索域名、标题或字段..."
+                  placeholder={t('searchPlaceholder')}
                   className="w-full pl-8 pr-8 py-2 text-sm border border-neutral-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-primary"
                 />
                 {searchQuery && (
@@ -311,7 +314,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
                       ? "text-red-500"
                       : "text-neutral-400 hover:text-red-500"
                   }`}
-                  title={confirmClear ? "再次点击确认清空" : "清空所有历史"}
+                  title={confirmClear ? t('confirmClearAll') : t('clearAllHistory')}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -319,7 +322,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
             </div>
             {confirmClear && (
               <p className="text-xs text-red-500 text-center animate-fade-in">
-                再次点击确认清空所有历史记录
+                {t('confirmClearMsg')}
               </p>
             )}
           </div>
@@ -329,8 +332,8 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
             {history.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-neutral-400 py-12">
                 <Clock size={32} className="mb-3 text-neutral-300" />
-                <p className="text-sm">暂无填充记录</p>
-                <p className="text-xs mt-1">自动填充表单后，记录会显示在这里</p>
+                <p className="text-sm">{t('noHistory')}</p>
+                <p className="text-xs mt-1">{t('noHistoryHint')}</p>
               </div>
             ) : (
               history.map((entry) => {
@@ -367,7 +370,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
                       </div>
                       <div className="shrink-0 ml-2 flex items-center space-x-1.5">
                         <span className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded">
-                          {entry.fields.length} 字段
+                          {t('fieldCount', { count: entry.fields.length })}
                         </span>
                         <button
                           onClick={(e) => {
@@ -375,7 +378,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
                             onDeleteHistory(entry.id);
                           }}
                           className="p-1 text-neutral-300 hover:text-red-500 transition-colors"
-                          title="删除"
+                          title={t('delete')}
                         >
                           <X size={12} />
                         </button>
@@ -412,7 +415,7 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
                                   <button
                                     onClick={() => toggleReveal(revealKey)}
                                     className="shrink-0 ml-1.5 p-1 text-neutral-400 hover:text-neutral-600"
-                                    title={isRevealed ? "隐藏" : "显示"}
+                                    title={isRevealed ? t('hide') : t('show')}
                                   >
                                     {isRevealed ? <EyeOff size={12} /> : <Eye size={12} />}
                                   </button>
@@ -422,10 +425,10 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
                           })}
                         </div>
                         <div className="mt-2 pt-2 border-t border-neutral-100 flex items-center justify-between text-[10px] text-neutral-400">
-                          <span>{new Date(entry.timestamp).toLocaleString('zh-CN')}</span>
+                          <span>{new Date(entry.timestamp).toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US')}</span>
                           <span className="flex items-center space-x-1">
                             {entry.mode === FillMode.AI ? <Bot size={10} /> : <Play size={10} />}
-                            <span>{entry.mode === FillMode.AI ? 'AI' : '标准'}</span>
+                            <span>{entry.mode === FillMode.AI ? t('modeAI') : t('modeStandard')}</span>
                           </span>
                         </div>
                       </div>

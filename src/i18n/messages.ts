@@ -1,0 +1,172 @@
+export type MessageKey = keyof typeof zh;
+
+const zh = {
+  // Header
+  appName: 'SnapForm',
+  refreshDetection: '刷新检测',
+  settings: '设置',
+
+  // Tabs
+  tabFill: '填充',
+  tabHistory: '历史',
+
+  // Detection status
+  fieldsDetected: '检测到 {count} 个表单字段',
+  noFormDetected: '当前页面未检测到表单',
+
+  // Fill button states
+  generating: '正在生成...',
+  fillSuccess: '已填充 {count} 个字段',
+  fillError: '填充失败',
+  autoFill: '自动填充',
+  clearForm: '清空表单',
+
+  // Activity log
+  activityLog: '操作日志',
+  noLogs: '暂无操作记录',
+
+  // History
+  searchPlaceholder: '搜索域名、标题或字段...',
+  confirmClearAll: '再次点击确认清空',
+  clearAllHistory: '清空所有历史',
+  confirmClearMsg: '再次点击确认清空所有历史记录',
+  noHistory: '暂无填充记录',
+  noHistoryHint: '自动填充表单后，记录会显示在这里',
+  fieldCount: '{count} 字段',
+  delete: '删除',
+  hide: '隐藏',
+  show: '显示',
+  modeAI: 'AI',
+  modeStandard: '标准',
+
+  // Time
+  justNow: '刚刚',
+  minutesAgo: '{count} 分钟前',
+  hoursAgo: '{count} 小时前',
+  daysAgo: '{count} 天前',
+
+  // Options page
+  settingsTitle: 'SnapForm 设置',
+  aiProvider: 'AI 提供商',
+  apiKey: 'API Key',
+  apiKeyPlaceholder: '输入你的 {provider} API Key',
+  getApiKey: '获取 API Key',
+  model: '模型',
+  customModel: '自定义模型...',
+  customModelPlaceholder: '输入模型名称，如 gpt-4o-2024-08-06',
+  modelPlaceholder: '输入模型名称',
+  apiUrl: 'API 地址',
+  apiUrlPlaceholder: 'https://your-api.com/v1',
+  apiUrlHint: '需要兼容 OpenAI Chat Completions API 格式（/chat/completions）',
+  aboutAiFill: '关于 AI 填充',
+  aboutAiFillDesc: 'AI 模式使用你选择的大模型来分析表单并生成智能测试数据。API Key 安全存储在浏览器本地，并通过 Chrome 同步功能在你的设备间同步。',
+  aboutStandardDesc: '标准模式无需 API Key，使用内置启发式规则生成数据。',
+  saving: '保存中...',
+  saveSettings: '保存设置',
+  saved: '已保存',
+  saveFailed: '保存失败',
+
+  // Popup log messages
+  noActiveTab: '未找到活动标签页',
+  cannotAccessChrome: '无法访问 Chrome 内部页面',
+  localDetected: '检测到 {count} 个表单字段',
+  aiAnalyzing: '本地未检测到表单，尝试 AI 分析...',
+  aiDetected: 'AI 检测到 {count} 个表单字段',
+  aiNoResult: 'AI 分析也未检测到表单',
+  noFieldsDetected: '当前页面未检测到表单字段',
+  detectError: '检测表单失败，请确认当前页面包含表单',
+  noFieldsToFill: '没有可填充的表单字段',
+  usingAI: '使用 AI 生成数据...',
+  usingLocal: '使用本地规则生成数据...',
+  fillSuccessLog: '成功填充 {count} 个字段',
+  fillErrorLog: '数据生成或填充失败',
+  formCleared: '表单已清空',
+  clearFormError: '清空表单失败',
+} as const;
+
+const en: Record<MessageKey, string> = {
+  // Header
+  appName: 'SnapForm',
+  refreshDetection: 'Refresh',
+  settings: 'Settings',
+
+  // Tabs
+  tabFill: 'Fill',
+  tabHistory: 'History',
+
+  // Detection status
+  fieldsDetected: '{count} form fields detected',
+  noFormDetected: 'No form detected on this page',
+
+  // Fill button states
+  generating: 'Generating...',
+  fillSuccess: 'Filled {count} fields',
+  fillError: 'Fill failed',
+  autoFill: 'Auto Fill',
+  clearForm: 'Clear Form',
+
+  // Activity log
+  activityLog: 'Activity Log',
+  noLogs: 'No activity yet',
+
+  // History
+  searchPlaceholder: 'Search domain, title or fields...',
+  confirmClearAll: 'Click again to confirm',
+  clearAllHistory: 'Clear all history',
+  confirmClearMsg: 'Click again to clear all history',
+  noHistory: 'No fill history',
+  noHistoryHint: 'Records will appear here after filling forms',
+  fieldCount: '{count} fields',
+  delete: 'Delete',
+  hide: 'Hide',
+  show: 'Show',
+  modeAI: 'AI',
+  modeStandard: 'Standard',
+
+  // Time
+  justNow: 'Just now',
+  minutesAgo: '{count}m ago',
+  hoursAgo: '{count}h ago',
+  daysAgo: '{count}d ago',
+
+  // Options page
+  settingsTitle: 'SnapForm Settings',
+  aiProvider: 'AI Provider',
+  apiKey: 'API Key',
+  apiKeyPlaceholder: 'Enter your {provider} API Key',
+  getApiKey: 'Get API Key',
+  model: 'Model',
+  customModel: 'Custom model...',
+  customModelPlaceholder: 'Enter model name, e.g. gpt-4o-2024-08-06',
+  modelPlaceholder: 'Enter model name',
+  apiUrl: 'API URL',
+  apiUrlPlaceholder: 'https://your-api.com/v1',
+  apiUrlHint: 'Must be compatible with OpenAI Chat Completions API (/chat/completions)',
+  aboutAiFill: 'About AI Fill',
+  aboutAiFillDesc: 'AI mode uses your chosen LLM to analyze forms and generate smart test data. Your API Key is stored securely in the browser and synced across your devices via Chrome Sync.',
+  aboutStandardDesc: 'Standard mode requires no API Key and uses built-in heuristic rules to generate data.',
+  saving: 'Saving...',
+  saveSettings: 'Save Settings',
+  saved: 'Saved',
+  saveFailed: 'Save failed',
+
+  // Popup log messages
+  noActiveTab: 'No active tab found',
+  cannotAccessChrome: 'Cannot access Chrome internal pages',
+  localDetected: '{count} form fields detected',
+  aiAnalyzing: 'No local detection, trying AI analysis...',
+  aiDetected: 'AI detected {count} form fields',
+  aiNoResult: 'AI analysis found no forms either',
+  noFieldsDetected: 'No form fields detected on this page',
+  detectError: 'Detection failed, please ensure the page has a form',
+  noFieldsToFill: 'No form fields to fill',
+  usingAI: 'Generating data with AI...',
+  usingLocal: 'Generating data with local rules...',
+  fillSuccessLog: 'Successfully filled {count} fields',
+  fillErrorLog: 'Data generation or fill failed',
+  formCleared: 'Form cleared',
+  clearFormError: 'Failed to clear form',
+};
+
+export const messages = { zh, en } as const;
+export type Locale = keyof typeof messages;

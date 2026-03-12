@@ -1,0 +1,8 @@
+{
+  "appName": {
+    "message": "SnapForm"
+  },
+  "appDescription": {
+    "message": "Smart form detection and one-click auto-fill with realistic test data. Supports AI generation, local rules, and UI libraries like Ant Design / Element UI."
+  }
+}

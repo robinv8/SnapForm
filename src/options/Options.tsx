@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { AIProvider, AIProviderConfig, AI_PROVIDER_DEFAULTS } from "../types";
 import { getAIConfig, saveAIConfig } from "../services/aiService";
+import { t } from "../i18n";
 
 const PROVIDERS: AIProvider[] = ["gemini", "openai", "deepseek", "custom"];
 
@@ -22,7 +23,6 @@ const Options: React.FC = () => {
   const [showKey, setShowKey] = useState(false);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  // Load config on mount
   useEffect(() => {
     getAIConfig().then((config) => {
       if (config) {
@@ -31,7 +31,6 @@ const Options: React.FC = () => {
         setModel(config.model);
         setBaseUrl(config.baseUrl || "");
 
-        // If model isn't in defaults, it's a custom model input
         const defaults = AI_PROVIDER_DEFAULTS[config.provider];
         if (defaults.models.length > 0 && !defaults.models.includes(config.model)) {
           setCustomModel(config.model);
@@ -80,7 +79,7 @@ const Options: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
           {/* Header */}
           <div className="bg-primary px-6 py-5 text-white">
-            <h1 className="text-2xl font-bold">SnapForm 设置</h1>
+            <h1 className="text-2xl font-bold">{t('settingsTitle')}</h1>
           </div>
 
           {/* Content */}
@@ -88,7 +87,7 @@ const Options: React.FC = () => {
             {/* Provider Selection */}
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-3">
-                AI 提供商
+                {t('aiProvider')}
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {PROVIDERS.map((p) => {
@@ -119,14 +118,14 @@ const Options: React.FC = () => {
             {/* API Key */}
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                API Key
+                {t('apiKey')}
               </label>
               <div className="relative">
                 <input
                   type={showKey ? "text" : "password"}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={`输入你的 ${providerDefaults.name} API Key`}
+                  placeholder={t('apiKeyPlaceholder', { provider: providerDefaults.name })}
                   className="w-full px-4 py-3 pr-12 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-primary outline-none transition-all"
                 />
                 <button
@@ -144,7 +143,7 @@ const Options: React.FC = () => {
                     rel="noopener noreferrer"
                     className="text-primary hover:underline inline-flex items-center gap-1"
                   >
-                    获取 API Key
+                    {t('getApiKey')}
                     <ExternalLink size={12} />
                   </a>
                 </p>
@@ -154,7 +153,7 @@ const Options: React.FC = () => {
             {/* Model Selection */}
             <div>
               <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                模型
+                {t('model')}
               </label>
               {providerDefaults.models.length > 0 ? (
                 <>
@@ -171,14 +170,14 @@ const Options: React.FC = () => {
                         {m}
                       </option>
                     ))}
-                    <option value="__custom__">自定义模型...</option>
+                    <option value="__custom__">{t('customModel')}</option>
                   </select>
                   {model === "__custom__" && (
                     <input
                       type="text"
                       value={customModel}
                       onChange={(e) => setCustomModel(e.target.value)}
-                      placeholder="输入模型名称，如 gpt-4o-2024-08-06"
+                      placeholder={t('customModelPlaceholder')}
                       className="w-full mt-2 px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-primary outline-none transition-all"
                     />
                   )}
@@ -188,27 +187,27 @@ const Options: React.FC = () => {
                   type="text"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  placeholder="输入模型名称"
+                  placeholder={t('modelPlaceholder')}
                   className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-primary outline-none transition-all"
                 />
               )}
             </div>
 
-            {/* Custom Base URL (only for custom provider) */}
+            {/* Custom Base URL */}
             {provider === "custom" && (
               <div>
                 <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                  API 地址
+                  {t('apiUrl')}
                 </label>
                 <input
                   type="text"
                   value={baseUrl}
                   onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://your-api.com/v1"
+                  placeholder={t('apiUrlPlaceholder')}
                   className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-primary outline-none transition-all"
                 />
                 <p className="mt-2 text-xs text-neutral-500">
-                  需要兼容 OpenAI Chat Completions API 格式（/chat/completions）
+                  {t('apiUrlHint')}
                 </p>
               </div>
             )}
@@ -218,14 +217,9 @@ const Options: React.FC = () => {
               <div className="flex items-start space-x-3">
                 <Info className="text-neutral-500 mt-0.5 shrink-0" size={20} />
                 <div className="text-sm text-neutral-700">
-                  <p className="font-semibold mb-1">关于 AI 填充</p>
-                  <p>
-                    AI 模式使用你选择的大模型来分析表单并生成智能测试数据。
-                    API Key 安全存储在浏览器本地，并通过 Chrome 同步功能在你的设备间同步。
-                  </p>
-                  <p className="mt-2">
-                    标准模式无需 API Key，使用内置启发式规则生成数据。
-                  </p>
+                  <p className="font-semibold mb-1">{t('aboutAiFill')}</p>
+                  <p>{t('aboutAiFillDesc')}</p>
+                  <p className="mt-2">{t('aboutStandardDesc')}</p>
                 </div>
               </div>
             </div>
@@ -238,19 +232,19 @@ const Options: React.FC = () => {
                 className="flex items-center space-x-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={18} />
-                <span>{status === "saving" ? "保存中..." : "保存设置"}</span>
+                <span>{status === "saving" ? t('saving') : t('saveSettings')}</span>
               </button>
 
               {status === "saved" && (
                 <div className="flex items-center space-x-2 text-green-600">
                   <CheckCircle2 size={18} />
-                  <span className="text-sm font-medium">已保存</span>
+                  <span className="text-sm font-medium">{t('saved')}</span>
                 </div>
               )}
               {status === "error" && (
                 <div className="flex items-center space-x-2 text-red-600">
                   <AlertCircle size={18} />
-                  <span className="text-sm font-medium">保存失败</span>
+                  <span className="text-sm font-medium">{t('saveFailed')}</span>
                 </div>
               )}
             </div>
