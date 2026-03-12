@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Simple Form</title></head>
+<body>
+  <form id="simple">
+    <label for="name">Name</label>
+    <input id="name" name="name" type="text" required />
+
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required />
+
+    <label for="phone">Phone</label>
+    <input id="phone" name="phone" type="tel" />
+
+    <label for="age">Age</label>
+    <input id="age" name="age" type="number" />
+
+    <label for="bio">Bio</label>
+    <textarea id="bio" name="bio"></textarea>
+
+    <label for="role">Role</label>
+    <select id="role" name="role">
+      <option value="">Select</option>
+      <option value="dev">Developer</option>
+      <option value="pm">Product Manager</option>
+      <option value="designer">Designer</option>
+    </select>
+
+    <label><input type="checkbox" name="agree" /> I agree</label>
+
+    <button type="submit">Submit</button>
+  </form>
+</body>
+</html>

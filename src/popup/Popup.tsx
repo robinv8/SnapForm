@@ -2,22 +2,37 @@ import React, { useState, useCallback, useEffect } from "react";
 import {
   generateSmartFormData,
   analyzeFormWithAI,
-} from "../services/geminiService";
+  getAIConfig,
+  hasValidConfig,
+  generateLocalData,
+} from "../services/aiService";
+import { saveFillHistory, getHistory, deleteHistoryEntry, clearHistory, searchHistory } from "../services/historyService";
 import ExtensionPopup from "../components/ExtensionPopup";
-import { FormFieldDefinition, FormData, FillMode, LogEntry } from "../types";
+import { FormFieldDefinition, FormData, FillMode, FillHistoryEntry, LogEntry, AI_PROVIDER_DEFAULTS } from "../types";
 
 const Popup: React.FC = () => {
   const [formFields, setFormFields] = useState<FormFieldDefinition[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [fillMode, setFillMode] = useState<FillMode>(FillMode.STANDARD);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [hasApiKey, setHasApiKey] = useState(false);
+  const [history, setHistory] = useState<FillHistoryEntry[]>([]);
+  const [fillResult, setFillResult] = useState<{ type: "success"; count: number } | { type: "error" } | null>(null);
+  const [aiReady, setAiReady] = useState(false);
+  const [providerInfo, setProviderInfo] = useState("");
 
-  // Check if API key is configured
+  // Check AI config on mount
   useEffect(() => {
-    chrome.storage.sync.get(["geminiApiKey"], (result) => {
-      setHasApiKey(!!result.geminiApiKey);
+    getAIConfig().then(config => {
+      const valid = hasValidConfig(config);
+      setAiReady(valid);
+      if (valid && config) {
+        setProviderInfo(`${AI_PROVIDER_DEFAULTS[config.provider].name} / ${config.model}`);
+      }
     });
+  }, []);
+
+  // Load history
+  useEffect(() => {
+    getHistory().then(setHistory);
   }, []);
 
   // Detect forms on the active tab
@@ -47,16 +62,15 @@ const Popup: React.FC = () => {
         currentWindow: true,
       });
       if (!tab.id) {
-        addLog("No active tab found", "error");
+        addLog("未找到活动标签页", "error");
         return;
       }
 
-      // Check if we can access this tab
       if (
         tab.url?.startsWith("chrome://") ||
         tab.url?.startsWith("chrome-extension://")
       ) {
-        addLog("Cannot access Chrome internal pages", "error");
+        addLog("无法访问 Chrome 内部页面", "error");
         return;
       }
 
@@ -72,12 +86,22 @@ const Popup: React.FC = () => {
 
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      // Check if we have API key for AI analysis
-      const { geminiApiKey } = await chrome.storage.sync.get(["geminiApiKey"]);
+      // Step 1: Always try local detection first
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        type: "DETECT_FORMS",
+      });
+      const localFields = response.fields || [];
 
-      if (geminiApiKey) {
-        // Use AI analysis
-        addLog("Using AI to analyze form...", "info");
+      if (localFields.length > 0) {
+        setFormFields(localFields);
+        addLog(`检测到 ${localFields.length} 个表单字段`, "success");
+        return;
+      }
+
+      // Step 2: Local detection failed — try AI if configured
+      const aiConfig = await getAIConfig();
+      if (hasValidConfig(aiConfig)) {
+        addLog("本地未检测到表单，尝试 AI 分析...", "info");
 
         const htmlResponse = await chrome.tabs.sendMessage(tab.id, {
           type: "GET_FORM_HTML",
@@ -85,52 +109,43 @@ const Popup: React.FC = () => {
 
         if (htmlResponse?.html) {
           const aiFields = await analyzeFormWithAI(htmlResponse.html);
-
           if (aiFields.length > 0) {
             setFormFields(aiFields);
-            addLog(`AI detected ${aiFields.length} form fields`, "success");
+            addLog(`AI 检测到 ${aiFields.length} 个表单字段`, "success");
             return;
           }
         }
 
-        addLog("AI analysis failed, using local detection", "info");
-      }
-
-      // Fallback to local detection
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        type: "DETECT_FORMS",
-      });
-      setFormFields(response.fields || []);
-
-      if (response.fields?.length > 0) {
-        addLog(`Detected ${response.fields.length} form fields`, "success");
+        addLog("AI 分析也未检测到表单", "info");
       } else {
-        addLog("No form fields detected on this page", "info");
+        addLog("当前页面未检测到表单字段", "info");
       }
     } catch (error) {
       console.error("Error detecting forms:", error);
-      addLog(
-        "Failed to detect forms. Make sure you're on a page with forms.",
-        "error"
-      );
+      addLog("检测表单失败，请确认当前页面包含表单", "error");
     }
   };
 
   const handleAutoFill = useCallback(async () => {
     if (formFields.length === 0) {
-      addLog("No form fields to fill", "error");
+      addLog("没有可填充的表单字段", "error");
       return;
     }
 
     setIsLoading(true);
-    addLog(
-      `Starting ${fillMode === FillMode.AI ? "AI" : "Standard"} generation...`,
-      "info"
-    );
+    setFillResult(null);
 
     try {
-      const data = await generateSmartFormData(formFields);
-      console.log("Generated data:", data);
+      // Determine fill mode: AI if configured, otherwise local
+      const aiConfig = await getAIConfig();
+      const useAI = hasValidConfig(aiConfig);
+      const mode = useAI ? FillMode.AI : FillMode.STANDARD;
+
+      addLog(useAI ? `使用 AI 生成数据...` : "使用本地规则生成数据...", "info");
+
+      const data = useAI
+        ? await generateSmartFormData(formFields)
+        : generateLocalData(formFields);
 
       // Send data to content script to fill the form
       const [tab] = await chrome.tabs.query({
@@ -144,17 +159,35 @@ const Popup: React.FC = () => {
         data,
       });
 
-      addLog(
-        `Successfully filled ${Object.keys(data).length} fields`,
-        "success"
-      );
+      const count = Object.keys(data).length;
+
+      // Save to history
+      try {
+        await saveFillHistory(
+          tab.url || '',
+          tab.title || '',
+          formFields,
+          data,
+          mode
+        );
+        const updated = await getHistory();
+        setHistory(updated);
+      } catch (e) {
+        console.error('Failed to save history:', e);
+      }
+
+      addLog(`成功填充 ${count} 个字段`, "success");
+      setFillResult({ type: "success", count });
+      setTimeout(() => setFillResult(null), 3000);
     } catch (error) {
       console.error(error);
-      addLog("Failed to generate or fill data", "error");
+      addLog("数据生成或填充失败", "error");
+      setFillResult({ type: "error" });
+      setTimeout(() => setFillResult(null), 3000);
     } finally {
       setIsLoading(false);
     }
-  }, [formFields, fillMode]);
+  }, [formFields]);
 
   const handleClear = async () => {
     try {
@@ -164,7 +197,6 @@ const Popup: React.FC = () => {
       });
       if (!tab.id) return;
 
-      // Send empty data to clear the form
       const emptyData: FormData = {};
       formFields.forEach((field) => {
         emptyData[field.id] = field.type === "checkbox" ? false : "";
@@ -175,10 +207,10 @@ const Popup: React.FC = () => {
         data: emptyData,
       });
 
-      addLog("Form cleared", "info");
+      addLog("表单已清空", "info");
     } catch (error) {
       console.error(error);
-      addLog("Failed to clear form", "error");
+      addLog("清空表单失败", "error");
     }
   };
 
@@ -189,22 +221,48 @@ const Popup: React.FC = () => {
   const handleRefresh = () => {
     setFormFields([]);
     setLogs([]);
+    setFillResult(null);
     detectForms();
   };
 
+  const handleDeleteHistory = async (id: string) => {
+    await deleteHistoryEntry(id);
+    const updated = await getHistory();
+    setHistory(updated);
+  };
+
+  const handleClearHistory = async () => {
+    await clearHistory();
+    setHistory([]);
+  };
+
+  const handleSearchHistory = async (query: string) => {
+    if (!query.trim()) {
+      const all = await getHistory();
+      setHistory(all);
+    } else {
+      const results = await searchHistory(query);
+      setHistory(results);
+    }
+  };
+
   return (
-    <div className="w-[400px] h-[600px]">
+    <div className="w-[400px] max-h-[600px] flex flex-col">
       <ExtensionPopup
         isLoading={isLoading}
         logs={logs}
-        currentMode={fillMode}
         onFill={handleAutoFill}
         onClear={handleClear}
-        onModeChange={setFillMode}
         formFieldsCount={formFields.length}
-        hasApiKey={hasApiKey}
         onOpenOptions={handleOpenOptions}
         onRefresh={handleRefresh}
+        history={history}
+        onDeleteHistory={handleDeleteHistory}
+        onClearHistory={handleClearHistory}
+        onSearchHistory={handleSearchHistory}
+        fillResult={fillResult}
+        aiReady={aiReady}
+        providerInfo={providerInfo}
       />
     </div>
   );

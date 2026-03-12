@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>中文表单</title></head>
+<body>
+  <form id="chinese-form">
+    <label for="xm">姓名</label>
+    <input id="xm" name="name" type="text" required />
+
+    <label for="sj">手机号码</label>
+    <input id="sj" name="phone" type="tel" required />
+
+    <label for="yx">电子邮箱</label>
+    <input id="yx" name="email" type="email" />
+
+    <label for="gs">公司名称</label>
+    <input id="gs" name="company" type="text" />
+
+    <label for="zw">职位</label>
+    <select id="zw" name="position">
+      <option value="">请选择</option>
+      <option value="engineer">工程师</option>
+      <option value="manager">经理</option>
+      <option value="director">总监</option>
+    </select>
+
+    <label for="dz">详细地址</label>
+    <textarea id="dz" name="address"></textarea>
+
+    <label><input type="checkbox" name="newsletter" /> 订阅邮件通知</label>
+
+    <button type="submit">提交</button>
+  </form>
+</body>
+</html>

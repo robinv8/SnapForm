@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Stacked Modals</title>
+<style>
+  .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+  .modal { background: white; padding: 24px; border-radius: 8px; min-width: 350px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+</style>
+</head>
+<body>
+  <!-- Background form -->
+  <form>
+    <input name="bg_field" type="text" placeholder="Background" />
+  </form>
+
+  <!-- First modal (lower z-index) -->
+  <div class="modal-overlay" role="dialog" style="z-index: 100; background: rgba(0,0,0,0.3);">
+    <div class="modal">
+      <h3>First Modal</h3>
+      <label for="first_name">Name (First Modal)</label>
+      <input id="first_name" name="first_name" type="text" />
+    </div>
+  </div>
+
+  <!-- Second modal (higher z-index) — this should be detected -->
+  <div class="modal-overlay" role="dialog" style="z-index: 200; background: rgba(0,0,0,0.3);">
+    <div class="modal">
+      <h3>Second Modal (Top)</h3>
+      <label for="top_name">Name</label>
+      <input id="top_name" name="top_name" type="text" />
+
+      <label for="top_email">Email</label>
+      <input id="top_email" name="top_email" type="email" />
+    </div>
+  </div>
+</body>
+</html>

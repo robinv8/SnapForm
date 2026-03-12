@@ -1,6 +1,7 @@
 // Content script - runs on web pages to detect and fill forms
 
 import { FormFieldDefinition, FormData } from '../types';
+import { findActiveFormContainer, detectFields, isElementVisible } from '../detector/formDetector';
 
 // Message types for communication with popup
 interface DetectFormsMessage {
@@ -26,147 +27,23 @@ type Message = DetectFormsMessage | GetFormHtmlMessage | FillFormMessage | SetFi
 // Store detected fields for filling
 let detectedFields: FormFieldDefinition[] = [];
 
-// Get relevant form HTML from the page
+// Get relevant form HTML from the active container
 function getFormHtml(): string {
-  // Try to find forms first
-  const forms = document.querySelectorAll('form');
-  if (forms.length > 0) {
-    return Array.from(forms).map(form => form.outerHTML).join('\n');
-  }
-
-  // Try to find modal dialogs (common in Bootstrap/React)
-  const modals = document.querySelectorAll('.modal, [role="dialog"], .dialog, .modal-content');
-  if (modals.length > 0) {
-    return Array.from(modals).map(modal => modal.outerHTML).join('\n');
-  }
-
-  // Try to find common form containers
-  const containers = document.querySelectorAll('.form, .form-group, .form-container, [class*="form"]');
-  if (containers.length > 0) {
-    return Array.from(containers).slice(0, 5).map(c => c.outerHTML).join('\n');
-  }
-
-  // Fallback: get main content area
-  const main = document.querySelector('main, .main, #main, .content, #content, .container');
-  if (main) {
-    return main.outerHTML;
-  }
-
-  // Last resort: get body but limit size
-  const body = document.body.innerHTML;
-  return body.substring(0, 50000); // Limit to ~50KB
+  const container = findActiveFormContainer(document);
+  return container.outerHTML.substring(0, 50000); // Limit to ~50KB
 }
 
-// Simple local detection as fallback
-function detectFormFieldsLocally(): FormFieldDefinition[] {
-  const fields: FormFieldDefinition[] = [];
-  const inputs = document.querySelectorAll('input, select, textarea');
-  const seenIds = new Set<string>();
-
-  inputs.forEach((element, index) => {
-    const input = element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-    
-    // Skip non-fillable types
-    const skipTypes = ['hidden', 'submit', 'button', 'image', 'file', 'reset'];
-    if (skipTypes.includes(input.type)) {
-      return;
-    }
-
-    // Skip invisible inputs
-    if (!isElementVisible(input)) {
-      return;
-    }
-
-    // Generate unique ID
-    let fieldId = input.id || input.name || `field_${index}`;
-    let uniqueId = fieldId;
-    let counter = 1;
-    while (seenIds.has(uniqueId)) {
-      uniqueId = `${fieldId}_${counter}`;
-      counter++;
-    }
-    seenIds.add(uniqueId);
-
-    fields.push({
-      id: uniqueId,
-      name: input.name || uniqueId,
-      label: getFieldLabel(input, index),
-      type: getFieldType(input),
-      required: input.hasAttribute('required'),
-      options: input.tagName === 'SELECT' 
-        ? Array.from((input as HTMLSelectElement).options).filter(o => o.value).map(o => o.value)
-        : undefined
-    });
-  });
-
-  return fields;
-}
-
-// Check if element is visible
-function isElementVisible(element: HTMLElement): boolean {
-  const style = window.getComputedStyle(element);
-  return (
-    style.display !== 'none' &&
-    style.visibility !== 'hidden' &&
-    style.opacity !== '0' &&
-    element.offsetWidth > 0 &&
-    element.offsetHeight > 0
-  );
-}
-
-// Get label for a field
-function getFieldLabel(input: HTMLElement, index: number): string {
-  const inputElement = input as HTMLInputElement;
-  
-  // Try label[for]
-  if (input.id) {
-    const label = document.querySelector(`label[for="${input.id}"]`);
-    if (label?.textContent) return label.textContent.trim();
-  }
-  
-  // Try parent label
-  const parentLabel = input.closest('label');
-  if (parentLabel?.textContent) return parentLabel.textContent.trim();
-  
-  // Try placeholder
-  if (inputElement.placeholder) return inputElement.placeholder;
-  
-  // Try name/id
-  return inputElement.name || inputElement.id || `Field ${index + 1}`;
-}
-
-// Get field type
-function getFieldType(input: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): FormFieldDefinition['type'] {
-  if (input.tagName === 'SELECT') return 'select';
-  if (input.tagName === 'TEXTAREA') return 'textarea';
-  
-  const type = (input as HTMLInputElement).type?.toLowerCase() || 'text';
-  switch (type) {
-    case 'email': return 'email';
-    case 'tel': return 'tel';
-    case 'number': return 'number';
-    case 'checkbox': return 'checkbox';
-    case 'date': return 'date';
-    default: return 'text';
-  }
-}
-
-// Fill form fields with data
+// Fill form fields with data — scoped to active container
 function fillFormFields(data: FormData): void {
-  console.log('FormFiller Pro: Filling with data', data);
-  
-  // Build a map of all inputs for quick lookup
-  const inputs = document.querySelectorAll('input, select, textarea');
+  const container = findActiveFormContainer(document);
+  const inputs = container.querySelectorAll('input, select, textarea');
   const inputsArray = Array.from(inputs) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[];
-  
-  // Track which fields we've filled to handle duplicates
-  const filledIds = new Set<string>();
-  
+
   Object.entries(data).forEach(([fieldId, value]) => {
-    // Try to find input by id, name, or generated field id
+    // Try to find input by id, name
     let input = inputsArray.find(i => i.id === fieldId || i.name === fieldId);
-    
-    // For generated IDs like "field_0", "field_1", find by index
+
+    // For generated IDs like "field_0", find by index among visible inputs
     if (!input && fieldId.startsWith('field_')) {
       const match = fieldId.match(/^field_(\d+)(?:_(\d+))?$/);
       if (match) {
@@ -175,33 +52,14 @@ function fillFormFields(data: FormData): void {
           return !skipTypes.includes(i.type) && isElementVisible(i);
         });
         const index = parseInt(match[1]);
-        const subIndex = match[2] ? parseInt(match[2]) : 0;
-        
-        // Find the right input considering duplicates
-        let count = 0;
-        for (const i of visibleInputs) {
-          const id = i.id || i.name || `field_${visibleInputs.indexOf(i)}`;
-          if (id === fieldId || (!i.id && !i.name && visibleInputs.indexOf(i) === index)) {
-            if (count === subIndex) {
-              input = i;
-              break;
-            }
-            count++;
-          }
-        }
-        
-        // Fallback to direct index
-        if (!input && index < visibleInputs.length) {
+        if (index < visibleInputs.length) {
           input = visibleInputs[index];
         }
       }
     }
-    
-    if (!input) {
-      console.log(`FormFiller Pro: Could not find input for ${fieldId}`);
-      return;
-    }
-    
+
+    if (!input) return;
+
     // Fill based on type
     if (input.tagName === 'SELECT') {
       (input as HTMLSelectElement).value = String(value);
@@ -210,68 +68,156 @@ function fillFormFields(data: FormData): void {
     } else {
       (input as HTMLInputElement).value = String(value);
     }
-    
-    // Trigger events for all frameworks
+
     triggerInputEvents(input);
-    filledIds.add(fieldId);
   });
-  
-  console.log(`FormFiller Pro: Filled ${filledIds.size} fields`);
 }
 
 // Trigger events for React/Vue/Angular compatibility
 function triggerInputEvents(input: HTMLElement): void {
-  // Native events
   input.dispatchEvent(new Event('input', { bubbles: true }));
   input.dispatchEvent(new Event('change', { bubbles: true }));
   input.dispatchEvent(new Event('blur', { bubbles: true }));
-  
+
   // For React controlled components
-  const inputEl = input as HTMLInputElement;
   const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
     window.HTMLInputElement.prototype, 'value'
   )?.set;
-  
+
   if (nativeInputValueSetter && input.tagName === 'INPUT') {
-    const currentValue = inputEl.value;
+    const currentValue = (input as HTMLInputElement).value;
     nativeInputValueSetter.call(input, currentValue);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
+    window.HTMLTextAreaElement.prototype, 'value'
+  )?.set;
+
+  if (nativeTextareaValueSetter && input.tagName === 'TEXTAREA') {
+    const currentValue = (input as HTMLTextAreaElement).value;
+    nativeTextareaValueSetter.call(input, currentValue);
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
 }
 
-// Listen for messages from popup
-chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
-  console.log('FormFiller Pro: Received message', message.type);
-  
+// ─── Highlight detected fields ──────────────────────────────────
+
+const HIGHLIGHT_CLASS = 'snapform-highlight';
+let styleInjected = false;
+
+function injectHighlightStyle(): void {
+  if (styleInjected) return;
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes snapform-pulse {
+      0%, 100% { outline-color: rgba(234, 88, 12, 0); }
+      25%, 75% { outline-color: rgba(234, 88, 12, 0.8); }
+      50% { outline-color: rgba(234, 88, 12, 0.4); }
+    }
+    .${HIGHLIGHT_CLASS} {
+      outline: 2px solid rgba(234, 88, 12, 0.8);
+      outline-offset: 2px;
+      animation: snapform-pulse 1.5s ease-in-out;
+    }
+  `;
+  document.head.appendChild(style);
+  styleInjected = true;
+}
+
+const CUSTOM_SELECTORS = '.ant-select, .ant-picker, .ant-cascader, .ant-input-number, .ant-switch, .ant-rate, .ant-slider, .el-select, .el-date-editor, .el-cascader, .el-input-number, .el-switch';
+
+function findHighlightTarget(field: FormFieldDefinition, container: Element): HTMLElement | null {
+  const inputs = Array.from(
+    container.querySelectorAll('input, select, textarea')
+  ) as HTMLElement[];
+  const skipTypes = ['hidden', 'submit', 'button', 'image', 'file', 'reset'];
+
+  let el = inputs.find(i =>
+    (i as HTMLInputElement).id === field.id || (i as HTMLInputElement).name === field.id
+  );
+
+  if (!el) {
+    try {
+      const custom = container.querySelector(`#${CSS.escape(field.id)}`) as HTMLElement;
+      if (custom?.matches(CUSTOM_SELECTORS)) el = custom;
+    } catch {
+      // Invalid selector
+    }
+  }
+
+  if (!el && field.id.startsWith('field_')) {
+    const m = field.id.match(/^field_(\d+)/);
+    if (m) {
+      const idx = parseInt(m[1]);
+      const allVisible: HTMLElement[] = [];
+      inputs.forEach(i => {
+        if (!skipTypes.includes((i as HTMLInputElement).type) && isElementVisible(i)) {
+          allVisible.push(i);
+        }
+      });
+      container.querySelectorAll(CUSTOM_SELECTORS).forEach(c => {
+        if (isElementVisible(c as HTMLElement)) allVisible.push(c as HTMLElement);
+      });
+      if (idx < allVisible.length) el = allVisible[idx];
+    }
+  }
+
+  if (el) {
+    const formItem = el.closest('.ant-form-item, .el-form-item');
+    if (formItem) return formItem as HTMLElement;
+  }
+
+  return el || null;
+}
+
+function highlightFields(fields: FormFieldDefinition[]): void {
+  injectHighlightStyle();
+
+  const container = findActiveFormContainer(document);
+  const matched = new Set<HTMLElement>();
+
+  fields.forEach(field => {
+    const el = findHighlightTarget(field, container);
+    if (el) matched.add(el);
+  });
+
+  matched.forEach(el => el.classList.add(HIGHLIGHT_CLASS));
+
+  setTimeout(() => {
+    matched.forEach(el => el.classList.remove(HIGHLIGHT_CLASS));
+  }, 1600);
+}
+
+// ─── Message Listener ───────────────────────────────────────────
+
+chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
   switch (message.type) {
-    case 'DETECT_FORMS':
-      // Local detection as fallback
-      const fields = detectFormFieldsLocally();
-      console.log('FormFiller Pro: Detected fields locally', fields);
+    case 'DETECT_FORMS': {
+      const container = findActiveFormContainer(document);
+      const fields = detectFields(container);
+      if (fields.length > 0) highlightFields(fields);
       sendResponse({ fields });
       break;
-      
-    case 'GET_FORM_HTML':
-      // Get HTML for AI analysis
+    }
+
+    case 'GET_FORM_HTML': {
       const html = getFormHtml();
-      console.log('FormFiller Pro: Got form HTML, length:', html.length);
       sendResponse({ html });
       break;
-      
+    }
+
     case 'FILL_FORM':
       fillFormFields(message.data);
       sendResponse({ success: true });
       break;
-      
+
     case 'SET_DETECTED_FIELDS':
-      // Store AI-detected fields
       detectedFields = message.fields;
-      console.log('FormFiller Pro: Stored AI-detected fields', detectedFields);
+      if (detectedFields.length > 0) highlightFields(detectedFields);
       sendResponse({ success: true });
       break;
   }
-  
+
   return true;
 });
-
-console.log('FormFiller Pro: Content script loaded v2');

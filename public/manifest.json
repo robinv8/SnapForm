@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "FormFiller Pro",
+  "name": "SnapForm",
   "version": "1.0.0",
-  "description": "Intelligently detect form context and generate realistic test data instantly using AI or standard heuristics.",
+  "description": "智能检测网页表单并一键自动填充真实测试数据，支持 AI 生成与本地规则，兼容 Ant Design / Element UI 等主流组件库。",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

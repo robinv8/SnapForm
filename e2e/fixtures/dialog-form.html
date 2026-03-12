@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Dialog Form</title>
+<style>
+  dialog { border: 1px solid #ccc; border-radius: 8px; padding: 24px; min-width: 400px; }
+  dialog::backdrop { background: rgba(0,0,0,0.5); }
+</style>
+</head>
+<body>
+  <!-- Background form -->
+  <form id="bg-form">
+    <label for="bg_search">Search</label>
+    <input id="bg_search" name="search" type="text" />
+  </form>
+
+  <button id="open-btn" onclick="document.getElementById('dlg').showModal()">Open Dialog</button>
+
+  <!-- Native dialog with form -->
+  <dialog id="dlg">
+    <form id="dialog-form" method="dialog">
+      <h2>Edit Profile</h2>
+
+      <label for="d_name">Display Name</label>
+      <input id="d_name" name="display_name" type="text" required />
+
+      <label for="d_email">Email</label>
+      <input id="d_email" name="email" type="email" required />
+
+      <label for="d_bio">Bio</label>
+      <textarea id="d_bio" name="bio" rows="3"></textarea>
+
+      <label><input type="checkbox" name="public_profile" /> Make profile public</label>
+
+      <button type="submit">Save</button>
+      <button type="button" onclick="document.getElementById('dlg').close()">Cancel</button>
+    </form>
+  </dialog>
+</body>
+</html>

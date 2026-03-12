@@ -1,17 +1,10 @@
 // Background service worker for Chrome extension
 
-// Handle extension installation
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('FormFiller Pro: Extension installed');
+  // Extension installed or updated
 });
 
-// Listen for messages from popup or content scripts
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // Currently just a passthrough, but can be extended for:
-  // - API key management
-  // - Cross-tab communication
-  // - Background data processing
-  console.log('Background received message:', message);
+chrome.runtime.onMessage.addListener((_message, _sender, _sendResponse) => {
   return true;
 });
 

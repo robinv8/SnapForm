@@ -33,8 +33,7 @@ export default defineConfig({
         },
       },
     },
-    // Ensure source maps for debugging
-    sourcemap: true,
+    sourcemap: false,
   },
   resolve: {
     alias: {
