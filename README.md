@@ -127,7 +127,7 @@ SnapForm/
 - No data is sent to external servers except your configured AI provider (when AI mode is used)
 - Form data is generated locally and never stored
 - Open source - audit the code yourself!
-- [Privacy Policy](https://xrobin0926.github.io/SnapForm/privacy-policy.html)
+- [Privacy Policy](https://robinv8.github.io/SnapForm/privacy-policy.html)
 
 ## 📄 License
 
