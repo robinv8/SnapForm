@@ -2,16 +2,17 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# FormFiller Pro - Chrome Extension
+# SnapForm - Chrome Extension
 
 An intelligent Chrome extension that automatically fills web forms with realistic test data using AI or standard heuristics.
 
 ## ✨ Features
 
-- 🤖 **AI-Powered Generation**: Uses Google Gemini 3 Flash to generate context-aware, realistic test data
+- 🤖 **AI-Powered Generation**: Supports Google Gemini, OpenAI, DeepSeek, and custom API endpoints for context-aware, realistic test data
 - ⚡ **Standard Mode**: Fast heuristic-based generation without API requirements
 - 🎯 **Smart Form Detection**: Automatically detects all form fields on any webpage
 - 🔄 **One-Click Fill**: Fill entire forms instantly with a single click
+- 🌐 **i18n**: Supports Chinese and English
 - 🎨 **Modern UI**: Clean, professional interface with real-time activity logs
 - 🔒 **Secure**: API keys stored securely in Chrome sync storage
 
@@ -39,7 +40,7 @@ An intelligent Chrome extension that automatically fills web forms with realisti
 ### Basic Usage
 
 1. **Navigate to any webpage with forms** (e.g., signup pages, contact forms)
-2. **Click the FormFiller Pro extension icon** in your Chrome toolbar
+2. **Click the SnapForm extension icon** in your Chrome toolbar
 3. **Choose your mode:**
    - **Standard**: Fast generation using built-in heuristics
    - **AI Smart Fill**: Intelligent generation using Gemini AI (requires API key)
@@ -49,7 +50,7 @@ An intelligent Chrome extension that automatically fills web forms with realisti
 ### Configuring AI Mode
 
 1. Click the **Settings icon** (⚙️) in the extension popup
-2. Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Choose your AI provider (Google Gemini, OpenAI, DeepSeek, or custom endpoint)
 3. Paste your API key and click **Save Settings**
 4. Your API key is securely stored and synced across your Chrome browsers
 
@@ -96,7 +97,7 @@ SnapForm/
 - **Framework**: React 19 + TypeScript
 - **Build Tool**: Vite 6
 - **Styling**: Tailwind CSS
-- **AI**: Google Gemini 3 Flash
+- **AI**: Google Gemini / OpenAI / DeepSeek / Custom API
 - **Icons**: Lucide React
 
 ## 📝 How It Works
@@ -123,9 +124,10 @@ SnapForm/
 ## 🔐 Privacy & Security
 
 - API keys are stored locally in Chrome's sync storage
-- No data is sent to external servers except Gemini API (when AI mode is used)
+- No data is sent to external servers except your configured AI provider (when AI mode is used)
 - Form data is generated locally and never stored
 - Open source - audit the code yourself!
+- [Privacy Policy](https://xrobin0926.github.io/SnapForm/privacy-policy.html)
 
 ## 📄 License
 
@@ -137,4 +139,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-**FormFiller Pro** - Stop typing dummy data manually. v1.0.0
+**SnapForm** - Stop typing dummy data manually. v1.0.0

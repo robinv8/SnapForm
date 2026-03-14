@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapForm - Privacy Policy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f9fafb;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 3rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
+            color: #111;
+        }
+
+        .updated {
+            color: #666;
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: #222;
+        }
+
+        h3 {
+            font-size: 1rem;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #444;
+        }
+
+        p {
+            margin-bottom: 0.75rem;
+        }
+
+        ul {
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.35rem;
+        }
+
+        strong {
+            color: #222;
+        }
+
+        .lang-switch {
+            text-align: right;
+            margin-bottom: 1.5rem;
+        }
+
+        .lang-switch a {
+            color: #e67e22;
+            text-decoration: none;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .lang-switch a:hover {
+            text-decoration: underline;
+        }
+
+        .section-en { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="lang-switch">
+            <a onclick="toggleLang()"><span id="lang-toggle">English</span></a>
+        </div>
+
+        <!-- 中文版 -->
+        <div class="section-zh">
+            <h1>SnapForm 隐私政策</h1>
+            <p class="updated">最后更新：2026 年 3 月 12 日</p>
+
+            <h2>概述</h2>
+            <p>SnapForm 是一款浏览器扩展，用于自动检测网页表单并填充测试数据。我们重视用户隐私，本政策说明了扩展如何处理您的数据。</p>
+
+            <h2>数据收集与存储</h2>
+
+            <h3>我们收集什么</h3>
+            <ul>
+                <li><strong>AI 提供商配置</strong>（API Key、模型名称）：存储在 Chrome 同步存储中（<code>chrome.storage.sync</code>），仅在您的已登录设备间同步。</li>
+                <li><strong>填充历史记录</strong>（域名、页面标题、已填充字段值）：存储在浏览器本地存储中（<code>chrome.storage.local</code>），不会上传到任何服务器。</li>
+            </ul>
+
+            <h3>我们不收集什么</h3>
+            <ul>
+                <li>不收集个人身份信息</li>
+                <li>不追踪用户浏览行为</li>
+                <li>不向第三方发送任何使用数据</li>
+                <li>不使用分析或广告服务</li>
+            </ul>
+
+            <h2>网络请求</h2>
+            <p>当您配置了 AI 提供商时，扩展会将表单 HTML 结构发送到您选择的 AI 服务（如 Google Gemini、OpenAI、DeepSeek 或您自定义的 API 端点）以分析表单并生成填充数据。这些请求：</p>
+            <ul>
+                <li>仅在本地检测失败时才会触发</li>
+                <li>直接发送到您配置的 AI 提供商，不经过任何中间服务器</li>
+                <li>使用您自己的 API Key 进行身份验证</li>
+            </ul>
+            <p>如果您未配置 AI 提供商，扩展完全在本地运行，不会发起任何网络请求。</p>
+
+            <h2>权限说明</h2>
+            <ul>
+                <li><strong>storage</strong>：存储 AI 配置和填充历史</li>
+                <li><strong>activeTab</strong>：访问当前标签页以检测表单</li>
+                <li><strong>scripting</strong>：注入内容脚本以检测和填充表单</li>
+                <li><strong>host_permissions（所有网址）</strong>：在任意网页上工作以检测表单</li>
+            </ul>
+
+            <h2>数据安全</h2>
+            <ul>
+                <li>API Key 存储在 Chrome 的加密同步存储中</li>
+                <li>所有填充历史数据仅存储在本地</li>
+                <li>扩展不包含任何远程分析或追踪代码</li>
+            </ul>
+
+            <h2>数据删除</h2>
+            <ul>
+                <li>您可以随时在扩展弹窗中清空填充历史</li>
+                <li>卸载扩展将自动删除所有存储的数据</li>
+                <li>在 Chrome 设置中清除浏览数据也会删除扩展数据</li>
+            </ul>
+
+            <h2>联系我们</h2>
+            <p>如有隐私相关问题，请通过 <a href="https://github.com/xRobin0926/SnapForm/issues" target="_blank">GitHub Issues</a> 联系我们。</p>
+
+            <h2>变更通知</h2>
+            <p>如隐私政策有重大变更，我们将通过扩展更新通知用户。</p>
+        </div>
+
+        <!-- English Version -->
+        <div class="section-en">
+            <h1>SnapForm Privacy Policy</h1>
+            <p class="updated">Last updated: March 12, 2026</p>
+
+            <h2>Overview</h2>
+            <p>SnapForm is a browser extension that automatically detects web forms and fills them with test data. We value your privacy and this policy explains how the extension handles your data.</p>
+
+            <h2>Data Collection &amp; Storage</h2>
+
+            <h3>What We Collect</h3>
+            <ul>
+                <li><strong>AI Provider Configuration</strong> (API Key, model name): Stored in Chrome sync storage (<code>chrome.storage.sync</code>), synced only across your signed-in devices.</li>
+                <li><strong>Fill History</strong> (domain, page title, filled field values): Stored in browser local storage (<code>chrome.storage.local</code>), never uploaded to any server.</li>
+            </ul>
+
+            <h3>What We Do NOT Collect</h3>
+            <ul>
+                <li>No personally identifiable information</li>
+                <li>No browsing behavior tracking</li>
+                <li>No usage data sent to third parties</li>
+                <li>No analytics or advertising services</li>
+            </ul>
+
+            <h2>Network Requests</h2>
+            <p>When you configure an AI provider, the extension sends form HTML structure to your chosen AI service (e.g., Google Gemini, OpenAI, DeepSeek, or your custom API endpoint) to analyze the form and generate fill data. These requests:</p>
+            <ul>
+                <li>Are triggered only when local detection fails</li>
+                <li>Go directly to your configured AI provider without any intermediary server</li>
+                <li>Authenticate using your own API Key</li>
+            </ul>
+            <p>If no AI provider is configured, the extension runs entirely locally and makes no network requests.</p>
+
+            <h2>Permissions</h2>
+            <ul>
+                <li><strong>storage</strong>: Store AI configuration and fill history</li>
+                <li><strong>activeTab</strong>: Access the current tab to detect forms</li>
+                <li><strong>scripting</strong>: Inject content scripts to detect and fill forms</li>
+                <li><strong>host_permissions (all URLs)</strong>: Work on any webpage to detect forms</li>
+            </ul>
+
+            <h2>Data Security</h2>
+            <ul>
+                <li>API Keys are stored in Chrome's encrypted sync storage</li>
+                <li>All fill history data is stored locally only</li>
+                <li>The extension contains no remote analytics or tracking code</li>
+            </ul>
+
+            <h2>Data Deletion</h2>
+            <ul>
+                <li>You can clear fill history at any time in the extension popup</li>
+                <li>Uninstalling the extension automatically deletes all stored data</li>
+                <li>Clearing browsing data in Chrome settings also removes extension data</li>
+            </ul>
+
+            <h2>Contact Us</h2>
+            <p>For privacy-related questions, please reach out via <a href="https://github.com/xRobin0926/SnapForm/issues" target="_blank">GitHub Issues</a>.</p>
+
+            <h2>Change Notification</h2>
+            <p>If there are significant changes to this privacy policy, we will notify users through extension updates.</p>
+        </div>
+    </div>
+
+    <script>
+        function toggleLang() {
+            const zh = document.querySelector('.section-zh');
+            const en = document.querySelector('.section-en');
+            const toggle = document.getElementById('lang-toggle');
+            if (zh.style.display === 'none') {
+                zh.style.display = 'block';
+                en.style.display = 'none';
+                toggle.textContent = 'English';
+            } else {
+                zh.style.display = 'none';
+                en.style.display = 'block';
+                toggle.textContent = '中文';
+            }
+        }
+    </script>
+</body>
+</html>
