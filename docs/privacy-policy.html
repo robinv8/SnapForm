@@ -110,14 +110,15 @@
             <ul>
                 <li><strong>AI 提供商配置</strong>（API Key、模型名称）：存储在 Chrome 同步存储中（<code>chrome.storage.sync</code>），仅在您的已登录设备间同步。</li>
                 <li><strong>填充历史记录</strong>（域名、页面标题、已填充字段值）：存储在浏览器本地存储中（<code>chrome.storage.local</code>），不会上传到任何服务器。</li>
+                <li><strong>匿名使用统计</strong>：扩展通过 Google Analytics 4 收集完全匿名的使用事件（如"打开弹窗"、"点击自动填充"），用于了解功能使用情况。我们不会收集任何个人身份信息、表单内容或浏览历史。</li>
             </ul>
 
             <h3>我们不收集什么</h3>
             <ul>
                 <li>不收集个人身份信息</li>
                 <li>不追踪用户浏览行为</li>
-                <li>不向第三方发送任何使用数据</li>
-                <li>不使用分析或广告服务</li>
+                <li>不将表单内容或 AI 生成的数据发送到除您配置的 AI 提供商之外的任何服务器</li>
+                <li>不使用广告服务</li>
             </ul>
 
             <h2>网络请求</h2>
@@ -141,7 +142,7 @@
             <ul>
                 <li>API Key 存储在 Chrome 的加密同步存储中</li>
                 <li>所有填充历史数据仅存储在本地</li>
-                <li>扩展不包含任何远程分析或追踪代码</li>
+                <li>匿名统计数据仅包含事件名称和计数，不含任何表单内容或个人身份信息</li>
             </ul>
 
             <h2>数据删除</h2>
@@ -172,14 +173,15 @@
             <ul>
                 <li><strong>AI Provider Configuration</strong> (API Key, model name): Stored in Chrome sync storage (<code>chrome.storage.sync</code>), synced only across your signed-in devices.</li>
                 <li><strong>Fill History</strong> (domain, page title, filled field values): Stored in browser local storage (<code>chrome.storage.local</code>), never uploaded to any server.</li>
+                <li><strong>Anonymous Usage Statistics</strong>: The extension collects fully anonymous usage events (e.g., "popup opened", "auto fill clicked") via Google Analytics 4 to understand feature usage. We do NOT collect any personally identifiable information, form content, or browsing history.</li>
             </ul>
 
             <h3>What We Do NOT Collect</h3>
             <ul>
                 <li>No personally identifiable information</li>
                 <li>No browsing behavior tracking</li>
-                <li>No usage data sent to third parties</li>
-                <li>No analytics or advertising services</li>
+                <li>No form content or AI-generated data sent to any server other than your configured AI provider</li>
+                <li>No advertising services</li>
             </ul>
 
             <h2>Network Requests</h2>
@@ -203,7 +205,7 @@
             <ul>
                 <li>API Keys are stored in Chrome's encrypted sync storage</li>
                 <li>All fill history data is stored locally only</li>
-                <li>The extension contains no remote analytics or tracking code</li>
+                <li>Anonymous statistics include only event names and counts, with no form content or personally identifiable information</li>
             </ul>
 
             <h2>Data Deletion</h2>

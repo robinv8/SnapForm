@@ -4,5 +4,8 @@
   },
   "appDescription": {
     "message": "智能检测网页表单并一键自动填充真实测试数据，支持 AI 生成与本地规则，兼容 Ant Design / Element UI 等主流组件库。"
+  },
+  "shortcutAutoFill": {
+    "message": "一键填充当前表单"
   }
 }

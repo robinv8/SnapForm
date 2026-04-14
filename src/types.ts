@@ -119,3 +119,7 @@ export interface FillHistoryEntry {
   fields: FillHistoryField[];
   mode: FillMode;
 }
+
+export interface SnapFormSettings {
+  showFloatingButton: boolean;
+}

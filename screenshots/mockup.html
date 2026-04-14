@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f4; }
+
+  .scene { width: 1280px; height: 800px; position: relative; overflow: hidden; display: none; }
+  .scene.active { display: block; }
+
+  .browser { width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; }
+  .browser-bar { background: #e7e5e4; padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #d6d3d1; }
+  .browser-dots { display: flex; gap: 6px; }
+  .browser-dots span { width: 12px; height: 12px; border-radius: 50%; }
+  .browser-dots .r { background: #ef4444; }
+  .browser-dots .y { background: #f59e0b; }
+  .browser-dots .g { background: #22c55e; }
+  .browser-url { flex: 1; background: #fff; border-radius: 6px; padding: 6px 14px; font-size: 13px; color: #57534E; margin: 0 80px; border: 1px solid #d6d3d1; }
+  .browser-content { flex: 1; position: relative; overflow: hidden; }
+
+  .popup-container { position: absolute; top: 8px; right: 24px; width: 400px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.1); overflow: hidden; z-index: 10; background: #fff; }
+
+  .popup-header { background: #EA580C; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; color: #fff; }
+  .popup-header .title { font-weight: 600; font-size: 15px; letter-spacing: 0.5px; }
+  .popup-header .icons { display: flex; gap: 10px; opacity: 0.8; }
+  .popup-header .icons svg { width: 16px; height: 16px; }
+
+  .popup-tabs { display: flex; border-bottom: 1px solid #e7e5e4; }
+  .popup-tab { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 500; color: #78716C; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .popup-tab.active { color: #EA580C; border-bottom-color: #EA580C; }
+  .popup-tab svg { width: 13px; height: 13px; }
+  .tab-badge { background: #e7e5e4; color: #57534E; font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+
+  .popup-body { padding: 16px; background: #FAFAF9; }
+
+  .status-card { padding: 12px; border-radius: 8px; background: #F5F5F4; font-size: 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: #44403C; }
+  .status-card.success svg { color: #16A34A; }
+  .ai-badge { font-size: 12px; color: #78716C; background: #F5F5F4; padding: 6px 12px; border-radius: 8px; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }
+
+  .btn-primary { width: 100%; padding: 12px; border-radius: 8px; background: #EA580C; color: #fff; font-weight: 600; font-size: 15px; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .btn-primary.success-state { background: #16A34A; }
+  .btn-secondary { width: 100%; padding: 10px; border-radius: 8px; background: #fff; color: #57534E; font-weight: 500; font-size: 14px; border: 1px solid #e7e5e4; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; cursor: pointer; }
+
+  .log-label { font-size: 11px; font-weight: 600; color: #78716C; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px; }
+  .log-box { background: #fff; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px; }
+  .log-entry { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; font-size: 13px; }
+  .log-entry .dot { width: 14px; height: 14px; border-radius: 50%; margin-top: 2px; flex-shrink: 0; }
+  .log-entry .dot.success { background: #16A34A; }
+  .log-entry .dot.info { border: 2px solid #d6d3d1; background: transparent; }
+  .log-entry .text { color: #44403C; }
+  .log-entry .time { font-size: 10px; color: #a8a29e; display: block; margin-top: 2px; }
+
+  .history-item { background: #fff; border: 1px solid #e7e5e4; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .history-item .domain { font-size: 14px; font-weight: 500; color: #1C1917; }
+  .history-item .page-title { font-size: 12px; color: #78716C; margin-top: 2px; }
+  .history-item .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+  .history-item .time-badge { font-size: 10px; color: #a8a29e; }
+  .history-item .field-badge { font-size: 10px; background: #F5F5F4; color: #78716C; padding: 2px 6px; border-radius: 4px; }
+  .history-header { display: flex; align-items: center; gap: 6px; }
+  .history-header svg { width: 12px; height: 12px; color: #a8a29e; }
+
+  .search-bar { position: relative; margin-bottom: 12px; }
+  .search-bar input { width: 100%; padding: 8px 12px 8px 32px; border: 1px solid #e7e5e4; border-radius: 8px; font-size: 13px; background: #fff; outline: none; }
+  .search-bar svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: #a8a29e; }
+
+  /* Form mockup in background */
+  .form-page { padding: 40px 80px; }
+  .form-page h2 { font-size: 24px; font-weight: 600; color: #1C1917; margin-bottom: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 14px; font-weight: 500; color: #44403C; margin-bottom: 6px; }
+  .form-group label .required { color: #ef4444; }
+  .form-group input, .form-group select, .form-group textarea { width: 480px; padding: 10px 14px; border: 1px solid #d6d3d1; border-radius: 6px; font-size: 14px; color: #1C1917; background: #fff; }
+  .form-group input.filled { border-color: #EA580C; background: #fff7ed; }
+  .form-group input.highlighted { outline: 2px solid rgba(234, 88, 12, 0.6); outline-offset: 2px; }
+  .form-row { display: flex; gap: 16px; }
+  .form-row .form-group { flex: 1; }
+  .form-row input { width: 100%; }
+
+  /* In-page floating button */
+  .snapform-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.85);
+    color: #9a3412;
+    border: 1px solid rgba(234,88,12,0.25);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 6px rgba(0,0,0,0.04);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+  }
+  .snapform-btn svg { width: 14px; height: 14px; }
+
+  /* Options page v1.2 */
+  .options-page { padding: 40px 24px; background: #FAFAF9; min-height: 100%; }
+  .options-summary { max-width: 680px; margin: 0 auto 20px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 16px; padding: 28px; color: #fff; box-shadow: 0 10px 30px rgba(234,88,12,0.15); }
+  .options-summary-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .options-summary h1 { font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+  .options-summary p { font-size: 14px; opacity: 0.85; }
+  .options-summary .badge { background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 500; }
+  .options-summary .status { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border-radius: 6px; padding: 5px 10px; font-size: 13px; margin-top: 16px; }
+  .options-card { max-width: 680px; margin: 0 auto; background: #fff; border-radius: 16px; border: 1px solid #e7e5e4; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 28px; }
+  .options-section-title { font-size: 12px; font-weight: 700; color: #1C1917; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .options-section-title svg { color: #EA580C; }
+  .options-divider { border: none; border-top: 1px solid #f5f5f4; margin: 24px 0; }
+  .options-label { font-size: 14px; font-weight: 600; color: #44403C; margin-bottom: 8px; display: block; }
+  .options-select-trigger { width: 100%; padding: 12px 16px; border: 1px solid #d6d3d1; border-radius: 10px; background: #fff; font-size: 14px; display: flex; justify-content: space-between; align-items: center; color: #1C1917; margin-bottom: 16px; }
+  .options-select-trigger .sub { font-size: 12px; color: #a8a29e; }
+  .options-input-wrap { position: relative; margin-bottom: 16px; }
+  .options-input { width: 100%; padding: 12px 16px; border: 1px solid #d6d3d1; border-radius: 10px; font-size: 14px; outline: none; }
+  .options-input:focus { border-color: #EA580C; box-shadow: 0 0 0 3px rgba(234,88,12,0.08); }
+  .input-actions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; gap: 4px; }
+  .input-actions button { width: 32px; height: 32px; border: none; background: transparent; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #a8a29e; cursor: pointer; }
+  .input-actions button:hover { background: #f5f5f4; color: #57534E; }
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .mode-btn { padding: 14px; border: 2px solid #e7e5e4; border-radius: 10px; text-align: left; background: #fff; cursor: pointer; }
+  .mode-btn.active { border-color: #EA580C; background: #fff7ed; }
+  .mode-btn .name { font-size: 14px; font-weight: 500; color: #44403C; }
+  .mode-btn.active .name { color: #EA580C; }
+  .mode-btn .desc { font-size: 12px; color: #a8a29e; margin-top: 2px; }
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px; border: 1px solid #e7e5e4; border-radius: 10px; background: #fff; }
+  .toggle-row .text { font-size: 14px; color: #57534E; }
+  .toggle-switch { position: relative; width: 44px; height: 24px; background: #EA580C; border-radius: 12px; }
+  .toggle-switch::after { content: ''; position: absolute; width: 18px; height: 18px; background: #fff; border-radius: 50%; top: 3px; right: 3px; }
+  .info-box { background: #FAFAF9; border: 1px solid #e7e5e4; border-radius: 10px; padding: 16px; font-size: 14px; color: #44403C; line-height: 1.6; }
+  .save-btn { padding: 12px 24px; background: #EA580C; color: #fff; border: none; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .test-btn { padding: 12px 24px; border: 2px solid #e7e5e4; color: #44403C; background: #fff; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .status-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: #16A34A; }
+
+  /* SVG icons inline */
+  .icon { display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- Scene 1: Main popup with detected fields + floating button -->
+<div class="scene active" id="scene1">
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="browser-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <div class="browser-url">https://example.com/register</div>
+    </div>
+    <div class="browser-content">
+      <div class="form-page">
+        <h2>User Registration</h2>
+        <div style="background:#fff;border:1px solid #e7e5e4;border-radius:12px;padding:28px;max-width:560px;position:relative;">
+          <!-- Floating button -->
+          <div class="snapform-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name <span class="required">*</span></label>
+              <input type="text" value="Zhang Wei" class="filled highlighted">
+            </div>
+            <div class="form-group">
+              <label>Email <span class="required">*</span></label>
+              <input type="email" value="alex.chen42@gmail.com" class="filled highlighted">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" value="13856729401" class="filled highlighted">
+            </div>
+            <div class="form-group">
+              <label>Company</label>
+              <input type="text" value="Tencent" class="filled highlighted">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" value="Shenzhen Tech Park 168" class="filled highlighted" style="width:100%">
+          </div>
+        </div>
+      </div>
+
+      <!-- Popup -->
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="title">SnapForm</span>
+          <div class="icons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+        </div>
+        <div class="popup-tabs">
+          <div class="popup-tab active">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Fill
+          </div>
+          <div class="popup-tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            History
+          </div>
+        </div>
+        <div class="popup-body">
+          <div class="status-card success">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <strong>6</strong>&nbsp;form fields detected
+          </div>
+          <div class="ai-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M7 15h0"/><path d="M17 15h0"/></svg>
+            Google Gemini / gemini-2.5-flash
+          </div>
+          <button class="btn-primary success-state">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Filled 6 fields
+          </button>
+          <button class="btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+            Clear Form
+          </button>
+          <div class="log-label">Activity Log</div>
+          <div class="log-box">
+            <div class="log-entry"><div class="dot success"></div><div><span class="text">Successfully filled 6 fields</span><span class="time">16:15:32</span></div></div>
+            <div class="log-entry"><div class="dot info"></div><div><span class="text">Generating data with local rules...</span><span class="time">16:15:31</span></div></div>
+            <div class="log-entry"><div class="dot success"></div><div><span class="text">6 form fields detected</span><span class="time">16:15:30</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 2: Chinese version popup + floating button -->
+<div class="scene" id="scene2">
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="browser-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <div class="browser-url">https://ant.design/components/form-cn</div>
+    </div>
+    <div class="browser-content">
+      <div class="form-page">
+        <h2>Ant Design 表单</h2>
+        <div style="background:#fff;border:1px solid #e7e5e4;border-radius:12px;padding:28px;max-width:520px;position:relative;">
+          <!-- Floating button -->
+          <div class="snapform-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </div>
+          <div class="form-group">
+            <label style="font-size:14px;">用户名 <span class="required">*</span></label>
+            <input type="text" value="赵磊" class="filled highlighted">
+          </div>
+          <div class="form-group">
+            <label>邮箱 <span class="required">*</span></label>
+            <input type="email" value="morgan.liu85@outlook.com" class="filled highlighted">
+          </div>
+          <div class="form-group">
+            <label>手机号码</label>
+            <input type="tel" value="15892374610" class="filled highlighted">
+          </div>
+          <div class="form-group">
+            <label>所在城市</label>
+            <input type="text" value="杭州" class="filled highlighted">
+          </div>
+          <div class="form-group">
+            <label>个人简介</label>
+            <textarea style="width:100%;height:50px;border:1px solid #EA580C;border-radius:6px;padding:10px 14px;font-size:14px;background:#fff7ed;font-family:inherit">资深产品经理，关注用户增长与商业化策略。</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="title">SnapForm</span>
+          <div class="icons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/></svg>
+          </div>
+        </div>
+        <div class="popup-tabs">
+          <div class="popup-tab active">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            填充
+          </div>
+          <div class="popup-tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            历史
+          </div>
+        </div>
+        <div class="popup-body">
+          <div class="status-card success">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            检测到 <strong>&nbsp;5&nbsp;</strong> 个表单字段
+          </div>
+          <button class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            自动填充
+          </button>
+          <button class="btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>
+            清空表单
+          </button>
+          <div class="log-label">操作日志</div>
+          <div class="log-box">
+            <div class="log-entry"><div class="dot success"></div><div><span class="text">检测到 5 个表单字段</span><span class="time">16:12:08</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 3: History tab -->
+<div class="scene" id="scene3">
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="browser-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <div class="browser-url">https://example.com/dashboard</div>
+    </div>
+    <div class="browser-content">
+      <div class="form-page" style="opacity:0.3">
+        <h2>Dashboard</h2>
+        <p style="color:#78716C;margin-top:12px">Welcome back, Alex</p>
+      </div>
+
+      <div class="popup-container">
+        <div class="popup-header">
+          <span class="title">SnapForm</span>
+          <div class="icons">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/></svg>
+          </div>
+        </div>
+        <div class="popup-tabs">
+          <div class="popup-tab">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Fill
+          </div>
+          <div class="popup-tab active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            History
+            <span class="tab-badge">3</span>
+          </div>
+        </div>
+        <div class="popup-body" style="padding:12px">
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search domain, title or fields...">
+          </div>
+
+          <div class="history-item">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              <span class="domain">example.com</span>
+              <span class="time-badge" style="margin-left:auto">3m ago</span>
+            </div>
+            <p class="page-title">User Registration</p>
+            <div class="meta"><span></span><span class="field-badge">6 fields</span></div>
+          </div>
+
+          <div class="history-item">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              <span class="domain">ant.design</span>
+              <span class="time-badge" style="margin-left:auto">15m ago</span>
+            </div>
+            <p class="page-title">Ant Design Form 表单</p>
+            <div class="meta"><span></span><span class="field-badge">5 fields</span></div>
+          </div>
+
+          <div class="history-item">
+            <div class="history-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              <span class="domain">github.com</span>
+              <span class="time-badge" style="margin-left:auto">2h ago</span>
+            </div>
+            <p class="page-title">Create a new repository</p>
+            <div class="meta"><span></span><span class="field-badge">3 fields</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scene 4: Options page v1.2 -->
+<div class="scene" id="scene4">
+  <div class="browser">
+    <div class="browser-bar">
+      <div class="browser-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <div class="browser-url">chrome-extension://snapform/options.html</div>
+    </div>
+    <div class="browser-content" style="overflow-y:auto">
+      <div class="options-page">
+        <!-- Summary Card -->
+        <div class="options-summary">
+          <div class="options-summary-header">
+            <div>
+              <h1>SnapForm Settings</h1>
+              <p>Google Gemini / gemini-2.5-flash</p>
+            </div>
+            <div class="badge">AI Generation</div>
+          </div>
+          <div class="status">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Connection successful · 432ms
+          </div>
+        </div>
+
+        <!-- Main Card -->
+        <div class="options-card">
+          <div class="options-section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
+            AI Configuration
+          </div>
+
+          <label class="options-label">AI Provider</label>
+          <div class="options-select-trigger">
+            <div>
+              <div style="font-weight:500">Google Gemini</div>
+              <div class="sub">https://generativelanguage.googleapis.com/v1beta/openai</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          <label class="options-label">API Key</label>
+          <div class="options-input-wrap">
+            <input class="options-input" type="password" value="AIzaSyDdIxMm...T7vQ" style="padding-right:110px">
+            <div class="input-actions">
+              <button><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+              <button><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+              <button><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
+          </div>
+          <p style="font-size:13px;color:#78716C;margin-bottom:16px"><a href="#" style="color:#EA580C;text-decoration:none">Get API Key ↗</a></p>
+
+          <label class="options-label">Model</label>
+          <div class="options-select-trigger">
+            <span style="font-weight:500">gemini-2.5-flash</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a8a29e" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          <hr class="options-divider">
+
+          <div class="options-section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Preferences
+          </div>
+
+          <label class="options-label">Default Fill Mode</label>
+          <div class="mode-grid">
+            <div class="mode-btn active">
+              <div class="name">AI Generation (Recommended)</div>
+              <div class="desc">Use AI to analyze forms and generate smart data</div>
+            </div>
+            <div class="mode-btn">
+              <div class="name">Local Generation</div>
+              <div class="desc">Use built-in rules, no API needed</div>
+            </div>
+          </div>
+
+          <label class="options-label" style="margin-bottom:8px">Show in-page quick fill button</label>
+          <div class="toggle-row" style="margin-bottom:16px">
+            <div class="text">Show one-click fill icon when forms are detected</div>
+            <div class="toggle-switch"></div>
+          </div>
+
+          <hr class="options-divider">
+
+          <div class="options-section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            About
+          </div>
+          <div class="info-box">
+            <strong>About AI Fill</strong> AI mode uses your chosen LLM to analyze forms and generate smart test data. Your API Key is stored securely in the browser and synced across your devices via Chrome Sync.<br><br>
+            Standard mode requires no API Key and uses built-in heuristic rules to generate data.
+          </div>
+
+          <div style="margin-top:20px;display:flex;gap:12px;align-items:center">
+            <button class="save-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save Settings
+            </button>
+            <button class="test-btn">Test Connection</button>
+            <div class="status-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Saved
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showScene(id) {
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  }
+  const hash = window.location.hash.slice(1);
+  if (hash) showScene(hash);
+  window.addEventListener('hashchange', () => {
+    showScene(window.location.hash.slice(1));
+  });
+</script>
+</body>
+</html>

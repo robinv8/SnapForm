@@ -124,7 +124,8 @@ function buildMessages(instruction: string, prompt: string) {
 
 // ─── Test Connection ────────────────────────────────────────────
 
-export async function testConnection(config: AIProviderConfig): Promise<{ success: boolean; error?: string }> {
+export async function testConnection(config: AIProviderConfig): Promise<{ success: boolean; error?: string; latencyMs?: number }> {
+    const start = Date.now();
     try {
         const provider = createProvider(config);
         await generateText({
@@ -132,10 +133,10 @@ export async function testConnection(config: AIProviderConfig): Promise<{ succes
             messages: [{ role: 'user', content: 'Hi' }],
             maxTokens: 1,
         });
-        return { success: true };
+        return { success: true, latencyMs: Date.now() - start };
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        return { success: false, error: message };
+        return { success: false, error: message, latencyMs: Date.now() - start };
     }
 }
 

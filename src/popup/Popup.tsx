@@ -7,6 +7,7 @@ import {
   generateLocalData,
 } from "../services/aiService";
 import { saveFillHistory, getHistory, deleteHistoryEntry, clearHistory, searchHistory } from "../services/historyService";
+import { trackEvent } from "../services/analyticsService";
 import ExtensionPopup from "../components/ExtensionPopup";
 import { FormFieldDefinition, FormData, FillMode, FillHistoryEntry, LogEntry, AI_PROVIDER_DEFAULTS } from "../types";
 import { t } from "../i18n";
@@ -45,6 +46,7 @@ const Popup: React.FC = () => {
 
   useEffect(() => {
     detectForms();
+    trackEvent("popup_open");
   }, []);
 
   const addLog = (
@@ -106,6 +108,7 @@ const Popup: React.FC = () => {
       if (localFields.length > 0) {
         setFormFields(localFields);
         addLog(t('localDetected', { count: localFields.length }), "success");
+        trackEvent("forms_detected", { count: localFields.length, source: "local" });
         return;
       }
 
@@ -122,6 +125,7 @@ const Popup: React.FC = () => {
           if (aiFields.length > 0) {
             setFormFields(aiFields);
             addLog(t('aiDetected', { count: aiFields.length }), "success");
+            trackEvent("forms_detected", { count: aiFields.length, source: "ai" });
             return;
           }
         }
@@ -153,6 +157,7 @@ const Popup: React.FC = () => {
       const mode = useAI ? FillMode.AI : FillMode.STANDARD;
 
       addLog(useAI ? t('usingAI') : t('usingLocal'), "info");
+      trackEvent("auto_fill", { mode: useAI ? "ai" : "standard", field_count: formFields.length });
 
       let data: import("../types").FormData;
       if (useAI) {
@@ -224,6 +229,7 @@ const Popup: React.FC = () => {
       });
 
       addLog(t('formCleared'), "info");
+      trackEvent("clear_form");
     } catch (error) {
       console.error(error);
       addLog(t('clearFormError'), "error");
@@ -233,6 +239,7 @@ const Popup: React.FC = () => {
   const handleOpenOptions = () => {
     const optionsUrl = chrome.runtime.getURL("src/options/options.html");
     chrome.tabs.create({ url: optionsUrl });
+    trackEvent("settings_open");
   };
 
   const handleCustomPromptChange = (value: string) => {
@@ -245,6 +252,7 @@ const Popup: React.FC = () => {
     setLogs([]);
     setFillResult(null);
     detectForms();
+    trackEvent("refresh_forms");
   };
 
   const handleDeleteHistory = async (id: string) => {
