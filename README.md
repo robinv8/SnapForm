@@ -9,6 +9,8 @@ An intelligent Chrome extension that automatically fills web forms with realisti
 ## ✨ Features
 
 - 🤖 **AI-Powered Generation**: Supports Google Gemini, OpenAI, DeepSeek, Groq, Mistral, OpenRouter, SiliconFlow, Zhipu AI, Moonshot, and custom OpenAI-compatible endpoints
+- ⚡ **In-Page Quick Fill**: A subtle floating icon appears on detected forms — click it to fill instantly without opening the popup
+- ✨ **Fill Animations**: Form container glows and fields pulse highlight as they are filled, giving clear visual feedback
 - ✍️ **Popup Custom Prompt**: Tell the AI exactly what kind of data to generate right before filling (e.g. "generate e-commerce signup data")
 - ⚡ **Standard Mode**: Fast heuristic-based generation without API requirements
 - 🎯 **Smart Form Detection**: Automatically detects all form fields on any webpage, including inside active dialogs and modals
@@ -41,13 +43,10 @@ An intelligent Chrome extension that automatically fills web forms with realisti
 ### Basic Usage
 
 1. **Navigate to any webpage with forms** (e.g., signup pages, contact forms)
-2. **Click the SnapForm extension icon** in your Chrome toolbar
-3. **Choose your mode:**
-   - **Standard**: Fast generation using built-in heuristics
-   - **AI Smart Fill**: Intelligent generation using Gemini AI (requires API key)
+2. **SnapForm automatically detects the form** and shows a small icon in the top-right corner of the form container
+3. **Click the in-page icon** (or open the SnapForm popup) to auto-fill all detected fields
 4. **(Optional) Enter a custom prompt** in the popup to guide the AI (e.g. "generate medical appointment data")
-5. **Click "Auto Fill Form"** to populate all detected fields
-6. **Review and submit** the form as needed
+5. **Review and submit** the form as needed
 
 ### Configuring AI Mode
 
@@ -106,11 +105,11 @@ SnapForm/
 ## 📝 How It Works
 
 1. **Content Script** detects all form fields on the active webpage
-2. **Popup** displays detected fields and provides fill controls
+2. **Popup / Floating Button** displays detected fields and provides fill controls
 3. **Service** generates data based on field types and labels:
    - AI mode: Sends field definitions to Gemini API for intelligent generation
    - Standard mode: Uses pattern matching and heuristics
-4. **Content Script** fills the form with generated data
+4. **Content Script** fills the form with generated data and plays highlight animations
 5. **Activity Log** shows real-time status and results
 
 ## 🎨 Supported Field Types
@@ -142,4 +141,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-**SnapForm** - Stop typing dummy data manually. v1.1.0
+**SnapForm** - Stop typing dummy data manually. v1.2.0
