@@ -29,12 +29,14 @@ jobs:
         run: zip -r snapform-${{ github.ref_name }}.zip dist
 
       - name: Upload to Chrome Web Store
-        run: npx chrome-webstore-upload@3 upload --source snapform-${{ github.ref_name }}.zip --auto-publish
-        env:
-          EXTENSION_ID: ${{ secrets.EXTENSION_ID }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+        uses: fregante/chrome-webstore-upload@v3
+        with:
+          extension-id: ${{ secrets.EXTENSION_ID }}
+          client-id: ${{ secrets.CLIENT_ID }}
+          client-secret: ${{ secrets.CLIENT_SECRET }}
+          refresh-token: ${{ secrets.REFRESH_TOKEN }}
+          file-path: snapform-${{ github.ref_name }}.zip
+          publish: true
 
       - name: Upload artifact to GitHub Release
         uses: softprops/action-gh-release@v2
