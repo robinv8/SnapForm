@@ -1,17 +1,15 @@
 const { chromium } = require('playwright');
 const path = require('path');
+const fs = require('fs');
 
 const BASE = 'http://localhost:8765';
 
 async function injectMockPopup(page, locale = 'en', state = 'fill-success') {
-  // Wait for styles to load
-  await page.waitForSelector('link[rel="stylesheet"]', { state: 'attached' });
   await page.waitForTimeout(300);
-
   const isZh = locale === 'zh';
   const fillTab = isZh ? '填充' : 'Fill';
   const historyTab = isZh ? '历史' : 'History';
-  const detected = isZh ? '检测到 5 个表单字段' : '<strong>6</strong>&nbsp;form fields detected';
+  const detected = isZh ? '<strong>&nbsp;5&nbsp;</strong> 个表单字段' : '<strong>6</strong>&nbsp;form fields detected';
   const aiBadge = '<div class="text-xs text-neutral-500 px-3 py-2 rounded-lg bg-neutral-100 flex items-center mb-3"><svg class="mr-2 shrink-0 text-neutral-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M7 15h0"/><path d="M17 15h0"/></svg><span class="truncate">Google Gemini / gemini-2.5-flash</span></div>';
   const btnFill = isZh ? '自动填充' : 'Filled 6 fields';
   const btnClear = isZh ? '清空表单' : 'Clear Form';
@@ -179,6 +177,137 @@ async function injectMockHistory(page) {
   await page.waitForTimeout(200);
 }
 
+async function injectMockSettings(page) {
+  await page.waitForTimeout(300);
+  const html = `
+<div class="min-h-screen bg-neutral-50 py-6 px-4">
+  <div class="max-w-2xl mx-auto space-y-5">
+    <div class="rounded-xl shadow-lg p-5 text-white bg-gradient-to-r from-orange-500 to-orange-600">
+      <div class="flex items-start justify-between">
+        <div>
+          <h1 class="text-xl font-bold">Settings</h1>
+          <p class="text-white/80 text-sm mt-0.5">Google Gemini / gemini-2.5-flash</p>
+        </div>
+        <div class="bg-white/20 backdrop-blur rounded-lg px-3 py-1 text-sm font-medium">AI Generation</div>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur px-2.5 py-1 rounded-md text-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+          Connection successful
+          <span class="text-white/80">· 432ms</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden">
+      <div class="p-5 space-y-5">
+        <section>
+          <h2 class="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6F3C" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M7 15h0"/><path d="M17 15h0"/></svg>
+            AI Configuration
+          </h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-neutral-700 mb-1.5">AI Provider</label>
+              <div class="w-full px-3 py-2.5 border border-neutral-300 rounded-lg bg-white text-left flex items-center justify-between">
+                <div class="flex flex-col">
+                  <span class="font-medium">Google Gemini</span>
+                  <span class="text-[11px] text-neutral-400">https://generativelanguage.googleapis.com/v1beta/openai</span>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-400 shrink-0 ml-2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-neutral-700 mb-1.5">API Key</label>
+              <div class="relative">
+                <input type="password" value="sk-xxxxxxxxxxxx" class="w-full px-3 py-2.5 pr-24 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-orange-200 focus:border-primary outline-none transition-all" />
+                <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <button class="p-1 text-neutral-400 hover:text-neutral-600 rounded-md hover:bg-neutral-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                  <button class="p-1 text-neutral-400 hover:text-red-500 rounded-md hover:bg-neutral-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                  <button class="p-1 text-neutral-400 hover:text-neutral-600 rounded-md hover:bg-neutral-100"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                </div>
+              </div>
+              <p class="mt-1.5 text-sm text-neutral-500"><a href="#" class="text-primary hover:underline inline-flex items-center gap-1">Get API Key <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a></p>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-neutral-700 mb-1.5">Model</label>
+              <div class="w-full px-3 py-2.5 border border-neutral-300 rounded-lg bg-white text-left flex items-center justify-between">
+                <span class="font-medium">gemini-2.5-flash</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-400 shrink-0 ml-2"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-neutral-100" />
+
+        <section>
+          <h2 class="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6F3C" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Preferences
+          </h2>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-semibold text-neutral-700 mb-2">Default Fill Mode</label>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="px-3 py-2.5 rounded-lg border-2 border-primary bg-orange-50 text-primary text-left">
+                  <div class="font-medium text-sm">AI Generation (Recommended)</div>
+                  <div class="text-[11px] text-neutral-400 mt-0.5">Use AI to analyze forms and generate smart data</div>
+                </div>
+                <div class="px-3 py-2.5 rounded-lg border-2 border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 text-left">
+                  <div class="font-medium text-sm">Local Generation</div>
+                  <div class="text-[11px] text-neutral-400 mt-0.5">Use built-in rules, no API needed</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-neutral-700 mb-2">Show in-page quick fill button</label>
+              <div class="flex items-center justify-between p-2.5 rounded-lg border border-neutral-200 bg-white">
+                <div class="text-sm text-neutral-600">Show one-click fill icon when forms are detected</div>
+                <button class="relative inline-flex h-6 w-11 items-center rounded-full bg-primary"><span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6"></span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-neutral-100" />
+
+        <section>
+          <h2 class="text-xs font-bold text-neutral-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FF6F3C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            About
+          </h2>
+          <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-sm text-neutral-700 space-y-1">
+            <p><span class="font-semibold">About AI Fill mode:</span> uses your chosen LLM to analyze forms and generate smart test data. Your API key is stored securely in the browser and synced across your devices via Chrome Sync.</p>
+            <p>Standard mode requires no API Key and uses built-in heuristic rules to generate data.</p>
+          </div>
+        </section>
+
+        <div class="flex items-center gap-3 pt-1">
+          <button class="flex items-center space-x-2 px-5 py-2.5 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-colors">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Save Settings</span>
+          </button>
+          <button class="flex items-center space-x-2 px-5 py-2.5 border-2 border-neutral-300 text-neutral-700 font-semibold rounded-lg hover:border-neutral-400 transition-colors">
+            <span>Test Connection</span>
+          </button>
+          <div class="flex items-center space-x-2 text-green-600">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <span class="text-sm font-medium">Saved</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  `;
+  await page.evaluate((html) => {
+    const root = document.getElementById('root');
+    if (root) root.innerHTML = html;
+  }, html);
+  await page.waitForTimeout(200);
+}
+
 async function capturePopup(page, locale, state) {
   await page.goto(`${BASE}/src/popup/popup.html`);
   if (state === 'history') {
@@ -192,41 +321,76 @@ async function capturePopup(page, locale, state) {
   return await page.screenshot({ clip: box });
 }
 
-async function captureOptions(page) {
-  await page.goto(`${BASE}/src/options/options.html`);
-  await page.waitForTimeout(1200);
-  // Ensure body has size; fallback to window dimensions
-  const size = await page.evaluate(() => ({
-    width: Math.max(document.body.scrollWidth, document.documentElement.scrollWidth, window.innerWidth),
-    height: Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, window.innerHeight),
-  }));
-  await page.setViewportSize({ width: Math.max(size.width, 900), height: Math.max(size.height, 1200) });
-  await page.waitForTimeout(200);
-  return await page.screenshot({ fullPage: true });
+async function captureBackground(page, lang) {
+  const url = `file://${path.resolve(__dirname, 'test-form.html')}?lang=${lang}`;
+  await page.goto(url);
+  await page.waitForTimeout(400);
+  return await page.screenshot();
+}
+
+async function composite(page, bgBuffer, popupBuffer, outPath) {
+  const base64Bg = bgBuffer.toString('base64');
+  const base64Popup = popupBuffer.toString('base64');
+
+  const dataUrl = await page.evaluate(({ base64Bg, base64Popup }) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1280;
+      canvas.height = 800;
+      const ctx = canvas.getContext('2d');
+
+      const bgImg = new Image();
+      bgImg.onload = () => {
+        ctx.drawImage(bgImg, 0, 0);
+        const popupImg = new Image();
+        popupImg.onload = () => {
+          const x = 1280 - 24 - popupImg.width;
+          const y = 8;
+          ctx.drawImage(popupImg, x, y);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        popupImg.src = 'data:image/png;base64,' + base64Popup;
+      };
+      bgImg.src = 'data:image/png;base64,' + base64Bg;
+    });
+  }, { base64Bg, base64Popup });
+
+  const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '');
+  fs.writeFileSync(outPath, Buffer.from(base64Data, 'base64'));
 }
 
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 800, height: 1200 } });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
-  const fs = require('fs');
-  const outDir = __dirname;
+  // 1. English fill
+  const bgEn = await captureBackground(page, 'en');
+  fs.writeFileSync(path.resolve(__dirname, 'bg-en.png'), bgEn);
+  const popupEn = await capturePopup(page, 'en', 'fill-success');
+  fs.writeFileSync(path.resolve(__dirname, 'popup-fill-en.png'), popupEn);
+  await composite(page, bgEn, popupEn, path.resolve(__dirname, 'screenshot-1-fill-en.png'));
+  console.log('Saved screenshot-1-fill-en.png');
 
-  const popupFillEn = await capturePopup(page, 'en', 'fill-success');
-  fs.writeFileSync(path.join(outDir, 'popup-fill-en.png'), popupFillEn);
-  console.log('Saved popup-fill-en.png');
+  // 2. Chinese fill
+  const bgZh = await captureBackground(page, 'zh');
+  fs.writeFileSync(path.resolve(__dirname, 'bg-zh.png'), bgZh);
+  const popupZh = await capturePopup(page, 'zh', 'fill-idle');
+  fs.writeFileSync(path.resolve(__dirname, 'popup-fill-zh.png'), popupZh);
+  await composite(page, bgZh, popupZh, path.resolve(__dirname, 'screenshot-2-fill-zh.png'));
+  console.log('Saved screenshot-2-fill-zh.png');
 
-  const popupFillZh = await capturePopup(page, 'zh', 'fill-idle');
-  fs.writeFileSync(path.join(outDir, 'popup-fill-zh.png'), popupFillZh);
-  console.log('Saved popup-fill-zh.png');
+  // 3. History - reuse english background
+  const popupHist = await capturePopup(page, 'en', 'history');
+  fs.writeFileSync(path.resolve(__dirname, 'popup-history.png'), popupHist);
+  await composite(page, bgEn, popupHist, path.resolve(__dirname, 'screenshot-3-history.png'));
+  console.log('Saved screenshot-3-history.png');
 
-  const popupHistory = await capturePopup(page, 'en', 'history');
-  fs.writeFileSync(path.join(outDir, 'popup-history.png'), popupHistory);
-  console.log('Saved popup-history.png');
-
-  const options = await captureOptions(page);
-  fs.writeFileSync(path.join(outDir, 'options-real.png'), options);
-  console.log('Saved options-real.png');
+  // 4. Settings
+  await page.goto(`${BASE}/src/options/options.html`);
+  await injectMockSettings(page);
+  const settingsBuf = await page.screenshot();
+  fs.writeFileSync(path.resolve(__dirname, 'screenshot-4-settings.png'), settingsBuf);
+  console.log('Saved screenshot-4-settings.png');
 
   await browser.close();
 })();
