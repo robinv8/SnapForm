@@ -8,9 +8,10 @@ An intelligent Chrome extension that automatically fills web forms with realisti
 
 ## ✨ Features
 
-- 🤖 **AI-Powered Generation**: Supports Google Gemini, OpenAI, DeepSeek, and custom API endpoints for context-aware, realistic test data
+- 🤖 **AI-Powered Generation**: Supports Google Gemini, OpenAI, DeepSeek, Groq, Mistral, OpenRouter, SiliconFlow, Zhipu AI, Moonshot, and custom OpenAI-compatible endpoints
+- ✍️ **Popup Custom Prompt**: Tell the AI exactly what kind of data to generate right before filling (e.g. "generate e-commerce signup data")
 - ⚡ **Standard Mode**: Fast heuristic-based generation without API requirements
-- 🎯 **Smart Form Detection**: Automatically detects all form fields on any webpage
+- 🎯 **Smart Form Detection**: Automatically detects all form fields on any webpage, including inside active dialogs and modals
 - 🔄 **One-Click Fill**: Fill entire forms instantly with a single click
 - 🌐 **i18n**: Supports Chinese and English
 - 🎨 **Modern UI**: Clean, professional interface with real-time activity logs
@@ -44,13 +45,14 @@ An intelligent Chrome extension that automatically fills web forms with realisti
 3. **Choose your mode:**
    - **Standard**: Fast generation using built-in heuristics
    - **AI Smart Fill**: Intelligent generation using Gemini AI (requires API key)
-4. **Click "Auto Fill Form"** to populate all detected fields
-5. **Review and submit** the form as needed
+4. **(Optional) Enter a custom prompt** in the popup to guide the AI (e.g. "generate medical appointment data")
+5. **Click "Auto Fill Form"** to populate all detected fields
+6. **Review and submit** the form as needed
 
 ### Configuring AI Mode
 
 1. Click the **Settings icon** (⚙️) in the extension popup
-2. Choose your AI provider (Google Gemini, OpenAI, DeepSeek, or custom endpoint)
+2. Choose your AI provider (Google Gemini, OpenAI, DeepSeek, Groq, Mistral, OpenRouter, SiliconFlow, Zhipu AI, Moonshot, or custom endpoint)
 3. Paste your API key and click **Save Settings**
 4. Your API key is securely stored and synced across your Chrome browsers
 
@@ -97,8 +99,9 @@ SnapForm/
 - **Framework**: React 19 + TypeScript
 - **Build Tool**: Vite 6
 - **Styling**: Tailwind CSS
-- **AI**: Google Gemini / OpenAI / DeepSeek / Custom API
+- **AI**: Google Gemini / OpenAI / DeepSeek / Groq / Mistral / OpenRouter / SiliconFlow / Zhipu AI / Moonshot / Custom API
 - **Icons**: Lucide React
+- **Release**: GitHub Actions auto-upload to Chrome Web Store
 
 ## 📝 How It Works
 
@@ -139,4 +142,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
 
-**SnapForm** - Stop typing dummy data manually. v1.0.0
+**SnapForm** - Stop typing dummy data manually. v1.1.0
