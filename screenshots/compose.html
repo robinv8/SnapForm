@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  .scene { width: 1280px; height: 800px; position: relative; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const params = new URLSearchParams(location.search);
+  const bg = params.get('bg'); // e.g. scene1, scene2, scene3
+  const popup = params.get('popup'); // e.g. popup-fill-en.png
+
+  const backgrounds = {
+    scene1: `
+      <div style="width:1280px;height:800px;background:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+        <div style="background:#e7e5e4;padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #d6d3d1;">
+          <div style="display:flex;gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background:#ef4444;"></span><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;"></span><span style="width:12px;height:12px;border-radius:50%;background:#22c55e;"></span></div>
+          <div style="flex:1;background:#fff;border-radius:6px;padding:6px 14px;font-size:13px;color:#57534E;margin:0 80px;border:1px solid #d6d3d1;">https://example.com/register</div>
+        </div>
+        <div style="padding:40px 80px;">
+          <h2 style="font-size:24px;font-weight:600;color:#1C1917;margin-bottom:24px;">User Registration</h2>
+          <div style="background:#fff;border:1px solid #e7e5e4;border-radius:12px;padding:28px;max-width:560px;position:relative;">
+            <div style="position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,0.85);color:#9a3412;border:1px solid rgba(234,88,12,0.25);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,0.04),0 2px 6px rgba(0,0,0,0.04);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:16px;">
+              <div style="flex:1;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">Full Name <span style="color:#ef4444;">*</span></label><input type="text" value="Zhang Wei" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+              <div style="flex:1;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">Email <span style="color:#ef4444;">*</span></label><input type="email" value="alex.chen42@gmail.com" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+            </div>
+            <div style="display:flex;gap:16px;margin-bottom:16px;">
+              <div style="flex:1;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">Phone</label><input type="tel" value="13856729401" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+              <div style="flex:1;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">Company</label><input type="text" value="Tencent" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+            </div>
+            <div><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">Address</label><input type="text" value="Shenzhen Tech Park 168" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+          </div>
+        </div>
+      </div>
+    `,
+    scene2: `
+      <div style="width:1280px;height:800px;background:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+        <div style="background:#e7e5e4;padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #d6d3d1;">
+          <div style="display:flex;gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background:#ef4444;"></span><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;"></span><span style="width:12px;height:12px;border-radius:50%;background:#22c55e;"></span></div>
+          <div style="flex:1;background:#fff;border-radius:6px;padding:6px 14px;font-size:13px;color:#57534E;margin:0 80px;border:1px solid #d6d3d1;">https://ant.design/components/form-cn</div>
+        </div>
+        <div style="padding:40px 80px;">
+          <h2 style="font-size:24px;font-weight:600;color:#1C1917;margin-bottom:24px;">Ant Design 表单</h2>
+          <div style="background:#fff;border:1px solid #e7e5e4;border-radius:12px;padding:28px;max-width:520px;position:relative;">
+            <div style="position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,0.85);color:#9a3412;border:1px solid rgba(234,88,12,0.25);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,0.04),0 2px 6px rgba(0,0,0,0.04);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div style="margin-bottom:16px;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">用户名 <span style="color:#ef4444;">*</span></label><input type="text" value="赵磊" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+            <div style="margin-bottom:16px;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">邮箱 <span style="color:#ef4444;">*</span></label><input type="email" value="morgan.liu85@outlook.com" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+            <div style="margin-bottom:16px;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">手机号码</label><input type="tel" value="15892374610" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+            <div style="margin-bottom:16px;"><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">所在城市</label><input type="text" value="杭州" style="width:100%;padding:10px 14px;border:1px solid #EA580C;border-radius:6px;font-size:14px;background:#fff7ed;"></div>
+            <div><label style="display:block;font-size:14px;font-weight:500;color:#44403C;margin-bottom:6px;">个人简介</label><textarea style="width:100%;height:50px;border:1px solid #EA580C;border-radius:6px;padding:10px 14px;font-size:14px;background:#fff7ed;font-family:inherit;">资深产品经理，关注用户增长与商业化策略。</textarea></div>
+          </div>
+        </div>
+      </div>
+    `,
+    scene3: `
+      <div style="width:1280px;height:800px;background:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+        <div style="background:#e7e5e4;padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #d6d3d1;">
+          <div style="display:flex;gap:6px;"><span style="width:12px;height:12px;border-radius:50%;background:#ef4444;"></span><span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;"></span><span style="width:12px;height:12px;border-radius:50%;background:#22c55e;"></span></div>
+          <div style="flex:1;background:#fff;border-radius:6px;padding:6px 14px;font-size:13px;color:#57534E;margin:0 80px;border:1px solid #d6d3d1;">https://example.com/dashboard</div>
+        </div>
+        <div style="padding:40px 80px;opacity:0.3;">
+          <h2 style="font-size:24px;font-weight:600;color:#1C1917;margin-bottom:24px;">Dashboard</h2>
+          <p style="color:#78716C;margin-top:12px;">Welcome back, Alex</p>
+        </div>
+      </div>
+    `,
+  };
+
+  const root = document.getElementById('root');
+  if (bg && backgrounds[bg]) {
+    root.innerHTML = backgrounds[bg] + `<img src="${popup}" style="position:absolute;top:8px;right:24px;width:400px;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.15),0 4px 16px rgba(0,0,0,0.1);z-index:10;display:block;">`;
+  }
+</script>
+</body>
+</html>

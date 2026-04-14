@@ -56,12 +56,12 @@ const scenes = [
       if (!container) return;
       container.innerHTML = '';
       container.style.width = box.width + 'px';
-      container.style.height = box.height + 'px';
-      container.style.overflow = 'hidden';
+      container.style.height = 'auto';
+      container.style.overflow = 'visible';
       const img = document.createElement('img');
       img.src = 'data:image/png;base64,' + popupBase64;
       img.style.width = '100%';
-      img.style.height = '100%';
+      img.style.height = 'auto';
       img.style.display = 'block';
       container.appendChild(img);
     }, { box, popupBase64 });

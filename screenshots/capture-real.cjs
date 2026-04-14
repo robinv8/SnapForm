@@ -12,7 +12,7 @@ async function injectMockPopup(page, locale = 'en', state = 'fill-success') {
   const fillTab = isZh ? '填充' : 'Fill';
   const historyTab = isZh ? '历史' : 'History';
   const detected = isZh ? '检测到 5 个表单字段' : '<strong>6</strong>&nbsp;form fields detected';
-  const aiBadge = isZh ? '' : '<div class="text-xs text-neutral-500 px-3 py-2 rounded-lg bg-neutral-100 flex items-center mb-3"><svg class="mr-2 shrink-0 text-neutral-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M7 15h0"/><path d="M17 15h0"/></svg><span class="truncate">Google Gemini / gemini-2.5-flash</span></div>';
+  const aiBadge = '<div class="text-xs text-neutral-500 px-3 py-2 rounded-lg bg-neutral-100 flex items-center mb-3"><svg class="mr-2 shrink-0 text-neutral-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M7 15h0"/><path d="M17 15h0"/></svg><span class="truncate">Google Gemini / gemini-2.5-flash</span></div>';
   const btnFill = isZh ? '自动填充' : 'Filled 6 fields';
   const btnClear = isZh ? '清空表单' : 'Clear Form';
   const logLabel = isZh ? '操作日志' : 'Activity Log';
@@ -25,7 +25,13 @@ async function injectMockPopup(page, locale = 'en', state = 'fill-success') {
     ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
     : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
 
-  const customPrompt = (state === 'fill-success' && !isZh) ? '' : '';
+  const customPromptHtml = `
+    <div class="mb-3">
+      <label class="block text-xs font-semibold text-neutral-500 tracking-wider mb-1.5">${isZh ? '生成提示词' : 'Generation Prompt'}</label>
+      <textarea rows="2" class="w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-primary resize-none" placeholder="${isZh ? '例如：生成电商用户注册信息；生成一份医疗预约表单数据...' : 'e.g. Generate e-commerce signup data; Generate medical appointment form data...'}"></textarea>
+      <p class="mt-1 text-[10px] text-neutral-400">${isZh ? '填写后，AI 会参考你的要求生成更贴合场景的测试数据。不填则使用默认规则。' : 'When filled, AI will generate test data that better matches your scenario. Leave empty for default behavior.'}</p>
+    </div>
+  `;
 
   const html = `
 <div class="w-[400px] max-h-[600px] flex flex-col bg-white overflow-hidden">
@@ -53,6 +59,7 @@ async function injectMockPopup(page, locale = 'en', state = 'fill-success') {
       <span>${detected}</span>
     </div>
     ${aiBadge}
+    ${customPromptHtml}
     <div class="space-y-2 mb-4">
       <button class="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all flex items-center justify-center space-x-2 ${btnClass}">
         ${btnIcon}
