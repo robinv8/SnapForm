@@ -29,14 +29,38 @@ jobs:
         run: zip -r snapform-${{ github.ref_name }}.zip dist
 
       - name: Upload to Chrome Web Store
-        uses: fregante/chrome-webstore-upload@v4
-        with:
-          extension-id: ${{ secrets.EXTENSION_ID }}
-          client-id: ${{ secrets.CLIENT_ID }}
-          client-secret: ${{ secrets.CLIENT_SECRET }}
-          refresh-token: ${{ secrets.REFRESH_TOKEN }}
-          file-path: snapform-${{ github.ref_name }}.zip
-          publish: true
+        env:
+          EXTENSION_ID: ${{ secrets.EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+          ZIP_FILE: snapform-${{ github.ref_name }}.zip
+        run: |
+          npm install chrome-webstore-upload@4
+          cat > upload.mjs <<'EOF'
+          import fs from 'fs';
+          import chromeWebstoreUpload from 'chrome-webstore-upload';
+
+          const store = chromeWebstoreUpload({
+            extensionId: process.env.EXTENSION_ID,
+            clientId: process.env.CLIENT_ID,
+            clientSecret: process.env.CLIENT_SECRET,
+            refreshToken: process.env.REFRESH_TOKEN,
+          });
+
+          const zipStream = fs.createReadStream(process.env.ZIP_FILE);
+
+          try {
+            const uploadRes = await store.uploadExisting(zipStream);
+            console.log('Upload successful:', uploadRes);
+            const publishRes = await store.publish();
+            console.log('Publish successful:', publishRes);
+          } catch (err) {
+            console.error('Upload/Publish failed:', err);
+            process.exit(1);
+          }
+          EOF
+          node upload.mjs
 
       - name: Upload artifact to GitHub Release
         uses: softprops/action-gh-release@v2
