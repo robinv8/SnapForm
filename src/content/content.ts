@@ -3,6 +3,15 @@
 import { FormFieldDefinition, FormData } from '../types';
 import { findActiveFormContainer, detectFields, isElementVisible } from '../detector/formDetector';
 
+// Guard against double-execution when re-injected
+if ((globalThis as typeof globalThis & { __SNAPFORM_CONTENT_LOADED__?: boolean }).__SNAPFORM_CONTENT_LOADED__) {
+  console.log('[SnapForm] Content script already loaded, skipping re-initialization.');
+} else {
+  (globalThis as typeof globalThis & { __SNAPFORM_CONTENT_LOADED__?: boolean }).__SNAPFORM_CONTENT_LOADED__ = true;
+  main();
+}
+
+function main() {
 // Message types for communication with popup
 interface DetectFormsMessage {
   type: 'DETECT_FORMS';
@@ -221,3 +230,4 @@ chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) =
 
   return true;
 });
+} // end main()

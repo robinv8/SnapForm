@@ -19,6 +19,15 @@ const Popup: React.FC = () => {
   const [fillResult, setFillResult] = useState<{ type: "success"; count: number } | { type: "error" } | null>(null);
   const [aiReady, setAiReady] = useState(false);
   const [providerInfo, setProviderInfo] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
+
+  useEffect(() => {
+    chrome.storage.local.get(['snapformCustomPrompt']).then(result => {
+      if (result.snapformCustomPrompt) {
+        setCustomPrompt(result.snapformCustomPrompt);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     getAIConfig().then(config => {
@@ -72,21 +81,27 @@ const Popup: React.FC = () => {
         return;
       }
 
+      let response: { fields: FormFieldDefinition[] } | undefined;
       try {
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ["content.js"],
+        response = await chrome.tabs.sendMessage(tab.id, {
+          type: "DETECT_FORMS",
         });
-      } catch (e) {
-        // Script might already be injected
+      } catch {
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ["content.js"],
+          });
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          response = await chrome.tabs.sendMessage(tab.id, {
+            type: "DETECT_FORMS",
+          });
+        } catch (e) {
+          console.error("Error injecting content script:", e);
+        }
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        type: "DETECT_FORMS",
-      });
-      const localFields = response.fields || [];
+      const localFields = response?.fields || [];
 
       if (localFields.length > 0) {
         setFormFields(localFields);
@@ -132,14 +147,23 @@ const Popup: React.FC = () => {
 
     try {
       const aiConfig = await getAIConfig();
-      const useAI = hasValidConfig(aiConfig);
+      const validAI = hasValidConfig(aiConfig);
+      const preferAI = (aiConfig?.defaultFillMode ?? FillMode.AI) === FillMode.AI;
+      const useAI = preferAI && validAI;
       const mode = useAI ? FillMode.AI : FillMode.STANDARD;
 
       addLog(useAI ? t('usingAI') : t('usingLocal'), "info");
 
-      const data = useAI
-        ? await generateSmartFormData(formFields)
-        : generateLocalData(formFields);
+      let data: import("../types").FormData;
+      if (useAI) {
+        const result = await generateSmartFormData(formFields, customPrompt);
+        data = result.data;
+        if (result.fallback) {
+          addLog(t('aiFallbackWarning'), "error");
+        }
+      } else {
+        data = generateLocalData(formFields);
+      }
 
       const [tab] = await chrome.tabs.query({
         active: true,
@@ -179,7 +203,7 @@ const Popup: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [formFields]);
+  }, [formFields, customPrompt]);
 
   const handleClear = async () => {
     try {
@@ -207,7 +231,13 @@ const Popup: React.FC = () => {
   };
 
   const handleOpenOptions = () => {
-    chrome.runtime.openOptionsPage();
+    const optionsUrl = chrome.runtime.getURL("src/options/options.html");
+    chrome.tabs.create({ url: optionsUrl });
+  };
+
+  const handleCustomPromptChange = (value: string) => {
+    setCustomPrompt(value);
+    chrome.storage.local.set({ snapformCustomPrompt: value });
   };
 
   const handleRefresh = () => {
@@ -255,6 +285,8 @@ const Popup: React.FC = () => {
         fillResult={fillResult}
         aiReady={aiReady}
         providerInfo={providerInfo}
+        customPrompt={customPrompt}
+        onCustomPromptChange={handleCustomPromptChange}
       />
     </div>
   );

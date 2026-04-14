@@ -8,11 +8,11 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { AIProvider, AIProviderConfig, AI_PROVIDER_DEFAULTS } from "../types";
-import { getAIConfig, saveAIConfig } from "../services/aiService";
+import { AIProvider, AIProviderConfig, AI_PROVIDER_DEFAULTS, FillMode } from "../types";
+import { getAIConfig, saveAIConfig, testConnection } from "../services/aiService";
 import { t } from "../i18n";
 
-const PROVIDERS: AIProvider[] = ["gemini", "openai", "deepseek", "custom"];
+const PROVIDERS: AIProvider[] = ["gemini", "openai", "deepseek", "groq", "mistral", "openrouter", "siliconflow", "zhipu", "moonshot", "custom"];
 
 const Options: React.FC = () => {
   const [provider, setProvider] = useState<AIProvider>("gemini");
@@ -21,7 +21,10 @@ const Options: React.FC = () => {
   const [customModel, setCustomModel] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [defaultFillMode, setDefaultFillMode] = useState<FillMode>(FillMode.AI);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "failed">("idle");
+  const [testMessage, setTestMessage] = useState("");
 
   useEffect(() => {
     getAIConfig().then((config) => {
@@ -36,6 +39,7 @@ const Options: React.FC = () => {
           setCustomModel(config.model);
           setModel("__custom__");
         }
+        setDefaultFillMode(config.defaultFillMode || FillMode.AI);
       }
     });
   }, []);
@@ -61,6 +65,7 @@ const Options: React.FC = () => {
         apiKey,
         model: finalModel,
         baseUrl: provider === "custom" ? baseUrl : undefined,
+        defaultFillMode,
       };
       await saveAIConfig(config);
       setStatus("saved");
@@ -68,6 +73,27 @@ const Options: React.FC = () => {
     } catch {
       setStatus("error");
       setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setTestStatus("testing");
+    setTestMessage("");
+    const finalModel = model === "__custom__" ? customModel : model;
+    const config: AIProviderConfig = {
+      provider,
+      apiKey,
+      model: finalModel,
+      baseUrl: provider === "custom" ? baseUrl : undefined,
+    };
+    const result = await testConnection(config);
+    if (result.success) {
+      setTestStatus("success");
+      setTimeout(() => setTestStatus("idle"), 3000);
+    } else {
+      setTestStatus("failed");
+      setTestMessage(result.error || "");
+      setTimeout(() => setTestStatus("idle"), 5000);
     }
   };
 
@@ -89,7 +115,7 @@ const Options: React.FC = () => {
               <label className="block text-sm font-semibold text-neutral-700 mb-3">
                 {t('aiProvider')}
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {PROVIDERS.map((p) => {
                   const info = AI_PROVIDER_DEFAULTS[p];
                   const isActive = provider === p;
@@ -212,6 +238,36 @@ const Options: React.FC = () => {
               </div>
             )}
 
+            {/* Default Fill Mode */}
+            <div>
+              <label className="block text-sm font-semibold text-neutral-700 mb-3">
+                {t('defaultFillMode')}
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {([FillMode.AI, FillMode.STANDARD] as const).map((mode) => {
+                  const isActive = defaultFillMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => setDefaultFillMode(mode)}
+                      className={`px-4 py-3 rounded-lg border-2 text-left transition-all ${
+                        isActive
+                          ? "border-primary bg-orange-50 text-primary"
+                          : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+                      }`}
+                    >
+                      <div className="font-medium text-sm">
+                        {t(mode === FillMode.AI ? 'fillModeAI' : 'fillModeStandard')}
+                      </div>
+                      <div className="text-[11px] text-neutral-400 mt-0.5">
+                        {t(mode === FillMode.AI ? 'fillModeAIDesc' : 'fillModeStandardDesc')}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Info */}
             <div className="bg-neutral-100 border border-neutral-200 rounded-lg p-4">
               <div className="flex items-start space-x-3">
@@ -224,28 +280,53 @@ const Options: React.FC = () => {
               </div>
             </div>
 
-            {/* Save Button */}
-            <div className="flex items-center justify-between pt-4">
-              <button
-                onClick={handleSave}
-                disabled={!canSave || status === "saving"}
-                className="flex items-center space-x-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Save size={18} />
-                <span>{status === "saving" ? t('saving') : t('saveSettings')}</span>
-              </button>
+            {/* Save & Test Buttons */}
+            <div className="flex flex-col gap-3 pt-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSave}
+                  disabled={!canSave || status === "saving"}
+                  className="flex items-center space-x-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save size={18} />
+                  <span>{status === "saving" ? t('saving') : t('saveSettings')}</span>
+                </button>
 
-              {status === "saved" && (
-                <div className="flex items-center space-x-2 text-green-600">
-                  <CheckCircle2 size={18} />
-                  <span className="text-sm font-medium">{t('saved')}</span>
-                </div>
-              )}
-              {status === "error" && (
-                <div className="flex items-center space-x-2 text-red-600">
-                  <AlertCircle size={18} />
-                  <span className="text-sm font-medium">{t('saveFailed')}</span>
-                </div>
+                <button
+                  onClick={handleTestConnection}
+                  disabled={!canSave || testStatus === "testing"}
+                  className="flex items-center space-x-2 px-6 py-3 border-2 border-neutral-300 text-neutral-700 font-semibold rounded-lg hover:border-neutral-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>{testStatus === "testing" ? t('testing') : t('testConnection')}</span>
+                </button>
+
+                {status === "saved" && (
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <CheckCircle2 size={18} />
+                    <span className="text-sm font-medium">{t('saved')}</span>
+                  </div>
+                )}
+                {status === "error" && (
+                  <div className="flex items-center space-x-2 text-red-600">
+                    <AlertCircle size={18} />
+                    <span className="text-sm font-medium">{t('saveFailed')}</span>
+                  </div>
+                )}
+                {testStatus === "success" && (
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <CheckCircle2 size={18} />
+                    <span className="text-sm font-medium">{t('testSuccess')}</span>
+                  </div>
+                )}
+                {testStatus === "failed" && (
+                  <div className="flex items-center space-x-2 text-red-600">
+                    <AlertCircle size={18} />
+                    <span className="text-sm font-medium">{t('testFailed')}</span>
+                  </div>
+                )}
+              </div>
+              {testStatus === "failed" && testMessage && (
+                <p className="text-xs text-red-500">{t('testFailedDetail', { detail: testMessage })}</p>
               )}
             </div>
           </div>

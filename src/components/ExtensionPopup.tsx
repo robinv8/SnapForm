@@ -38,6 +38,8 @@ interface ExtensionPopupProps {
   fillResult?: { type: "success"; count: number } | { type: "error" } | null;
   aiReady: boolean;
   providerInfo: string;
+  customPrompt: string;
+  onCustomPromptChange: (value: string) => void;
 }
 
 const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
@@ -55,6 +57,8 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
   fillResult,
   aiReady,
   providerInfo,
+  customPrompt,
+  onCustomPromptChange,
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>("fill");
   const [searchQuery, setSearchQuery] = useState("");
@@ -215,6 +219,25 @@ const ExtensionPopup: React.FC<ExtensionPopupProps> = ({
             <div className="mb-3 text-xs text-neutral-500 px-3 py-2 rounded-lg bg-neutral-100 flex items-center">
               <Bot size={14} className="mr-2 shrink-0 text-neutral-400" />
               <span className="truncate">{providerInfo}</span>
+            </div>
+          )}
+
+          {/* Custom Prompt */}
+          {formFieldsCount > 0 && aiReady && (
+            <div className="mb-3">
+              <label className="block text-xs font-semibold text-neutral-500 tracking-wider mb-1.5">
+                {t('customPrompt')}
+              </label>
+              <textarea
+                value={customPrompt}
+                onChange={(e) => onCustomPromptChange(e.target.value)}
+                placeholder={t('customPromptPlaceholder')}
+                rows={2}
+                className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-primary resize-none"
+              />
+              <p className="mt-1 text-[10px] text-neutral-400">
+                {t('customPromptDesc')}
+              </p>
             </div>
           )}
 
